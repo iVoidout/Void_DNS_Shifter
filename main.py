@@ -94,7 +94,8 @@ class App(customtkinter.CTk):
                 af.MessageBox(title="Done!", message=f"{dnsName} has been set!", width=250, parent=self)
 
             except subprocess.CalledProcessError:
-                af.MessageBox(title="Error", message="Something went wrong!", parent=self)
+                af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
+                              parent=self, height=110)
 
         def reset_dns():
             try:
@@ -109,7 +110,8 @@ class App(customtkinter.CTk):
                 af.show_toplevel(self, af.MessageBox(title="Info!", message="The DNS has been reset!",
                                                      width=250, parent=self))
             except subprocess.CalledProcessError:
-                af.MessageBox(title="Error", message="Something went wrong!", parent=self)
+                af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
+                              parent=self, height=110)
 
         def add_dns():
             af.show_toplevel(self, DnsInputWindow())
@@ -125,8 +127,6 @@ class App(customtkinter.CTk):
         ComboList.insert(0, "Fastest")
 
         self.combobox = customtkinter.CTkComboBox(self, values=ComboList, command=change_dns_values, font=fontWidget)
-        self.combobox.set("Pinging...")
-        self.combobox.configure(state="disabled")
         self.combobox.grid(row=1, column=0, pady=(0, 10), padx=(30, 0), columnspan=2, sticky="ew")
 
         addbutton = customtkinter.CTkButton(self, text="+", width=40, command=add_dns)
@@ -184,6 +184,9 @@ class App(customtkinter.CTk):
 
         statusText = "Finding Fastest"
         self.after(200, lambda: self.frame.pingResult.set(statusText))
+        self.combobox.set("Pinging...")
+        self.combobox.configure(state="disabled")
+        self.setbutton.configure(state="disabled")
 
         stop_event_dots = threading.Event()
 

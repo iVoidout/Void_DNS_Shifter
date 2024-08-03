@@ -61,19 +61,19 @@ class MessageBox(CTkToplevel):
         # Columns
         self.grid_columnconfigure((0, 1), weight=1)
         # Rows
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=2)
         self.grid_rowconfigure(1, weight=1)
 
         message_label = CTkLabel(self, text=message)
-        message_label.grid(row=0, pady=(20, 0), padx=20, sticky="news", columnspan=2)
+        message_label.grid(row=0, pady=(10, 10), padx=20, sticky="news", columnspan=2)
         if msgType == 0:
             msgbox_button = CTkButton(self, text=buttontext, command=self.button_ok)
-            msgbox_button.grid(row=1, pady=20, padx=30, sticky="news", columnspan=2)
+            msgbox_button.grid(row=1, pady=(0, 20), padx=30, sticky="news", columnspan=2)
         if msgType == 1:
             msgbox_yes = CTkButton(self, text="Yes", command=self.button_yes)
-            msgbox_yes.grid(row=1,  column=0, pady=20, padx=20, sticky="ew")
+            msgbox_yes.grid(row=1,  column=0, pady=(0, 20), padx=20, sticky="ew")
             msgbox_no = CTkButton(self, text="No", command=self.button_no)
-            msgbox_no.grid(row=1, column=1,  pady=20, padx=20, sticky="ew")
+            msgbox_no.grid(row=1, column=1,  pady=(0, 20), padx=20, sticky="ew")
 
     def button_ok(self):
         self.userInput = None
