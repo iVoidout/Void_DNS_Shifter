@@ -80,6 +80,7 @@ class App(customtkinter.CTk):
         def set_dns():
             global primarydns, secondarydns, adapterName
             try:
+                print(primarydns, secondarydns, adapterName)
                 subprocess.run(
                     ["netsh", "interface", "ipv4", "set", "dns", adapterName, "static", primarydns],
                     check=True
@@ -104,6 +105,7 @@ class App(customtkinter.CTk):
                 self.setbutton.configure(state="disabled")
                 self.frame.pingResult.set("Ping: 0")
                 subprocess.run(["ipconfig", "/flushdns"], check=True)
+                self.combobox.set("Select DNS")
                 af.show_toplevel(self, af.MessageBox(title="Info!", message="The DNS has been reset!",
                                                      width=250, parent=self))
             except subprocess.CalledProcessError:
@@ -124,6 +126,7 @@ class App(customtkinter.CTk):
 
         self.combobox = customtkinter.CTkComboBox(self, values=ComboList, command=change_dns_values, font=fontWidget)
         self.combobox.set("Pinging...")
+        self.combobox.configure(state="disabled")
         self.combobox.grid(row=1, column=0, pady=(0, 10), padx=(30, 0), columnspan=2, sticky="ew")
 
         addbutton = customtkinter.CTkButton(self, text="+", width=40, command=add_dns)
@@ -182,12 +185,12 @@ class App(customtkinter.CTk):
         statusText = "Finding Fastest"
         self.after(200, lambda: self.frame.pingResult.set(statusText))
 
-        stop_event = threading.Event()
+        stop_event_dots = threading.Event()
 
         def dotdotdot():
             dotCount = 0
-            while not stop_event.is_set():
-                time.sleep(0.5)
+            while not stop_event_dots.is_set():
+                time.sleep(0.200)
                 if dotCount <= 3:
                     self.frame.pingResult.set(statusText + ("." * dotCount))
                     dotCount += 1
@@ -202,10 +205,8 @@ class App(customtkinter.CTk):
             fastest = 99999999
             fastestName = ""
             for name in dnsList:
-
                 ip = dnsDict[name][0]
                 self.combobox.set(name)
-
                 latency = ping(ip)
                 if latency is not None:
                     latency = round(latency * 1000, 0)
@@ -218,14 +219,16 @@ class App(customtkinter.CTk):
                     fastest = latency
                     fastestName = name
 
-            stop_event.set()
+            stop_event_dots.set()
             dnsName = fastestName
             primarydns = dnsDict[fastestName][0]
             secondarydns = dnsDict[fastestName][1]
-            self.combobox.set(fastestName)
+
             self.frame.frameUpdate(pingBool=False)
-            self.after(400, lambda: self.frame.pingResult.set(f"Ping: {fastest}"))
-            self.setbutton.configure(state="Normal")
+            self.after(250, lambda: self.frame.pingResult.set(f"Ping: {fastest}"))
+            self.setbutton.configure(state="normal")
+            self.combobox.configure(state="normal")
+            self.combobox.set(fastestName)
 
         except Exception:
             self.after(200, lambda: self.frame.pingResult.set("Couldn't get Fastest"))
