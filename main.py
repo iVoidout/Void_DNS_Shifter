@@ -7,6 +7,7 @@ import json
 import subprocess
 from ping3 import ping
 import threading
+import re
 
 # variable
 dnsName = ""
@@ -18,6 +19,7 @@ dnsList = []
 settings = {}
 adapterList = af.get_adapters()
 adapterAvailable = True
+onStartup = "Current"
 
 appearanceMode = "system"
 purpleTheme = r"assets\theme-purple.json"
@@ -45,11 +47,6 @@ class App(customtkinter.CTk):
         self.resizable(False, False)
         self.toplevel_window = None
 
-        # Starting Functions
-        self.check_adapter()
-        thread = threading.Thread(target=self.get_fastest)
-        thread.start()
-
         # Grid Configuration
         # Columns
         self.grid_columnconfigure(0, weight=1)
@@ -59,6 +56,14 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(0, weight=3)
         self.grid_rowconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
+
+        # Starting Functions
+        self.check_adapter()
+        if onStartup == "Fastest":
+            thread = threading.Thread(target=self.get_fastest)
+            thread.start()
+        else:
+            self.get_current_dns()
 
         # Functions
         def change_dns_values(choice):
@@ -80,7 +85,6 @@ class App(customtkinter.CTk):
         def set_dns():
             global primarydns, secondarydns, adapterName
             try:
-                print(primarydns, secondarydns, adapterName)
                 subprocess.run(
                     ["netsh", "interface", "ipv4", "set", "dns", adapterName, "static", primarydns],
                     check=True
@@ -164,7 +168,8 @@ class App(customtkinter.CTk):
             settingsDict = {
                 'Adapter': adapterName,
                 'Mode': appearanceMode,
-                'Theme': appTheme
+                'Theme': appTheme,
+                'Startup': onStartup
             }
 
             with open(configPath, 'w') as jsonFile:
@@ -236,6 +241,26 @@ class App(customtkinter.CTk):
         except Exception:
             self.after(200, lambda: self.frame.pingResult.set("Couldn't get Fastest"))
             self.combobox.set("Select DNS")
+
+    def get_current_dns(self):
+        global primarydns, secondarydns
+
+        res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapterName],
+                             capture_output=True, text=True, check=True).stdout
+        pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
+
+        match = re.findall(pattern, str(res))
+
+        primarydns = match[0]
+
+        if len(match) != 1:
+            secondarydns = match[1]
+        else:
+            secondarydns = "0.0.0.0"
+
+        # self.frame.frameUpdate(pingBool=True)
+        self.after(100, lambda: self.frame.frameUpdate(pingBool=True))
+        self.after(100, lambda: self.combobox.set("Current DNS"))
 
 
 # the Information Frame
@@ -342,7 +367,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         settingsFont = ("Cascadia Code", 12, "normal")
 
         self.iconbitmap(iconPath)
-        self.geometry(af.center_window(app, 300, 350, centerType='parent'))
+        self.geometry(af.center_window(app, 300, 450, centerType='parent'))
         self.title("Settings")
         self.toplevel_window = None
         self.grab_set()
@@ -350,6 +375,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
         self.radio_var_mode = customtkinter.IntVar(value=0)
         self.radio_var_theme = customtkinter.IntVar(value=0)
+        self.radio_var_startup = customtkinter.IntVar(value=0)
 
         # Grid Configuration
         # Columns
@@ -408,8 +434,21 @@ class SettingsWindow(customtkinter.CTkToplevel):
                                                          font=settingsFont)
         self.theme_radio3.grid(row=5, column=2, padx=10, sticky="ew")
 
+        label2 = customtkinter.CTkLabel(self, text="Startup:", font=fontWidget)
+        label2.grid(row=6, columnspan=3, pady=(10, 0))
+        self.startup_radio1 = customtkinter.CTkRadioButton(self, text="Fastest DNS", value=0, command=self.startup_radio,
+                                                           variable=self.radio_var_startup,
+                                                           radiobutton_width=rb_Size, radiobutton_height=rb_Size,
+                                                           font=settingsFont)
+        self.startup_radio1.grid(row=7, column=0, padx=(25, 10), sticky="ew", columnspan=2)
+        self.startup_radio2 = customtkinter.CTkRadioButton(self, text="Current DNS", value=1, command=self.startup_radio,
+                                                           variable=self.radio_var_startup,
+                                                           radiobutton_width=rb_Size, radiobutton_height=rb_Size,
+                                                           font=settingsFont)
+        self.startup_radio2.grid(row=7, column=1, padx=(65, 10), sticky="ew", columnspan=2)
+
         saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
-        saveDns_Button.grid(row=6, columnspan=3, pady=20)
+        saveDns_Button.grid(row=8, columnspan=3, pady=20)
 
         with open(configPath, 'r') as jFile:
             settingsDict = json.load(jFile)
@@ -429,7 +468,13 @@ class SettingsWindow(customtkinter.CTkToplevel):
                 self.theme_radio2.select()
             case "theme-retro.json":
                 self.theme_radio3.select()
-                
+
+        match settingsDict['Startup']:
+            case "Fastest":
+                self.startup_radio1.select()
+            case "Current":
+                self.startup_radio2.select()
+
     # Functions
     def save_settings(self):
         global adapterName, appearanceMode, appTheme, configPath
@@ -440,6 +485,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
             settingsDict['Adapter'] = adapterName
             settingsDict['Mode'] = self.mode_radio()
             settingsDict['Theme'] = self.theme_radio()
+            settingsDict['Startup'] = self.startup_radio()
 
             with open(configPath, 'w') as jFile:
                 json.dump(settingsDict, jFile)
@@ -452,32 +498,40 @@ class SettingsWindow(customtkinter.CTkToplevel):
             af.MessageBox(title="Error", message="Something went wrong!", width=250, parent=self)
 
     def mode_radio(self):
-        modeVar = self.radio_var_mode.get()
-        match modeVar:
+        match self.radio_var_mode.get():
             case 0:
-                mode = "system"
+                modeVar = "system"
             case 1:
-                mode = "dark"
+                modeVar = "dark"
             case 2:
-                mode = "light"
+                modeVar = "light"
             case _:
-                mode = appearanceMode
-        return mode
+                modeVar = appearanceMode
+        return modeVar
 
     def theme_radio(self):
-        themeVar = self.radio_var_theme.get()
-        match themeVar:
+        match self.radio_var_theme.get():
             case 0:
-                theme = purpleTheme
+                themeVar = purpleTheme
             case 1:
-                theme = blueTheme
+                themeVar = blueTheme
             case 2:
-                theme = retroTheme
+                themeVar = retroTheme
             case _:
-                theme = appTheme
+                themeVar = "System"
 
-        return theme
+        return themeVar
 
+    def startup_radio(self):
+        match self.radio_var_startup.get():
+            case 0:
+                startVar = "Fastest"
+            case 1:
+                startVar = "Current"
+            case _:
+                startVar = onStartup
+
+        return startVar
 
 # Get and Update DNS table
 def handle_dns_table():
@@ -519,23 +573,24 @@ def handle_dns_table():
 
 # Handle config.json file
 def handle_config(force=False):
-    global adapterName, settings, appTheme, appearanceMode, configPath
+    global adapterName, settings, appTheme, appearanceMode, configPath, onStartup
 
     try:
         if path.isfile(configPath) and force is False:
-            if force:
-                pass
             with open(configPath, 'r') as jsonFile:
                 settings = json.load(jsonFile)
 
             adapterName = settings['Adapter']
             appearanceMode = settings['Mode']
             appTheme = settings['Theme']
+            onStartup = settings['Startup']
+
         else:
             settings = {
                 'Adapter': adapterName,
                 'Mode': appearanceMode,
-                'Theme': purpleTheme
+                'Theme': purpleTheme,
+                'Startup': onStartup
             }
 
             with open(configPath, 'w') as jsonFile:

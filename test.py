@@ -1,44 +1,12 @@
-from ping3 import ping
-import threading
+import subprocess
+import re
 
-choice = "Fastest"
-dnsDict = {
-    '403': "10.202.10.202",
-    'Shecan': "178.22.122.100",
-    'Google': "8.8.8.8",
-    'CF': "1.1.1.1"
-}
-dnsList = ['403', 'Shecan', 'Google', 'CF']
+adapterName = "Ethernet"
+res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapterName],
+               capture_output=True, text=True, check=True).stdout
+pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
 
-if choice == "Fastest":
+match = re.findall(pattern, str(res))
 
-    resultList = [0]
-    fastest = 99999999
-    fastestName = ""
-
-    def pinging():
-        global fastest, fastestName, resultList
-        for name in dnsList:
-            ip = dnsDict[name]
-
-            latency = ping(ip)
-            if latency is not None:
-                latency = round(latency * 1000, 0)
-                resultList[0] = int(latency)
-                print(latency)
-            else:
-                resultList[0] = -1
-
-            latency = resultList[0]
-            if latency < fastest and latency != -1:
-                fastest = latency
-                fastestName = name
-
-        print(f"Name: {fastestName} Ping: {fastest}")
-
-    thread = threading.Thread(target=pinging)
-    thread.start()
-
-
-
-
+print(res)
+print(match[0])
