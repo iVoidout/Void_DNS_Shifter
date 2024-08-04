@@ -107,7 +107,6 @@ def resource_path(relative_path):
 
 
 def restart_program():
-    time.sleep(0.5)
     python = sys.executable
     execl(python, python, * sys.argv)
 

@@ -187,7 +187,7 @@ class App(customtkinter.CTk):
             af.close_app()
 
     def themes_lost(self):
-        af.MessageBox(title="Info!", message="Theme files are missing!\n\ndefault blue will be used",
+        af.MessageBox(title="Info!", message="Theme files are missing!\n\nDefault blue will be used",
                       height=150, width=250, parent=self)
 
     def check_adapter(self):
@@ -500,13 +500,9 @@ class SettingsWindow(customtkinter.CTkToplevel):
     # Functions
     def save_settings(self):
         global adapterName, appearanceMode, appTheme, configPath
-        themeChange = False
         try:
             with open(configPath, 'r') as jFile:
                 settingsDict = json.load(jFile)
-
-            if settingsDict['Theme'] != self.theme_radio():
-                themeChange = True
 
             settingsDict['Adapter'] = adapterName
             settingsDict['Mode'] = self.mode_radio()
@@ -516,12 +512,9 @@ class SettingsWindow(customtkinter.CTkToplevel):
             with open(configPath, 'w') as jFile:
                 json.dump(settingsDict, jFile)
 
-            handle_config()
-            print(themeChange)
             af.MessageBox(title="Done!", message="The settings have been save!", width=250, parent=self).get_input()
-
-            if themeChange:
-                af.restart_program()
+            handle_config()
+            af.restart_program()
 
         except WindowsError:
             af.MessageBox(title="Error", message="Something went wrong!", width=250, parent=self)
