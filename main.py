@@ -149,11 +149,6 @@ class App(customtkinter.CTk):
     def updateComboBox(self):
         self.combobox.configure(values=dnsList)
 
-    # def configFileInfo(self):
-    #     af.MessageBox(title="Info!", message="Config.json was not found\n\nit is now replaced",
-    #                   height=150, width=250, parent=self).get_input()
-    #     af.restart_program()
-
     def dnsFileInfo(self):
         af.MessageBox(title="Info!", message="DNS file was not found\n\nit is now replaced",
                       height=150, width=250, parent=self).wait_window()
