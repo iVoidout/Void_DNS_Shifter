@@ -43,7 +43,7 @@ class App(customtkinter.CTk):
 
         self.iconbitmap(iconPath)
         self.geometry(af.center_window(self, 300, 400))
-        self.title("Void Shifter")
+        self.title("Void DNS Shifter")
         self.resizable(False, False)
         self.toplevel_window = None
 
