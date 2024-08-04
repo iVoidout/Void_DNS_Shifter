@@ -1,7 +1,7 @@
 import time
 import customtkinter
 import appFuncitons as af
-from os import path
+import os
 import csv
 import json
 import subprocess
@@ -30,8 +30,15 @@ retroTheme = af.resource_path("theme-retro.json")
 appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
 
-configPath = r"assets\config.json"
-dnsFilePath = r"dns.csv"
+configPath = af.resource_path("config.json")
+
+local_appdata_path = os.getenv('LOCALAPPDATA')
+
+dnsFileDir = local_appdata_path + "\\VOIDSHIFTER"
+
+os.makedirs(dnsFileDir, exist_ok=True)
+
+dnsFilePath = dnsFileDir + "\\dns.csv"
 
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
@@ -149,36 +156,10 @@ class App(customtkinter.CTk):
     def updateComboBox(self):
         self.combobox.configure(values=dnsList)
 
-    def configFileInfo(self):
-        af.MessageBox(title="Info!", message="Config.json was not found\n\nit is now replaced",
-                      height=150, width=250, parent=self).get_input()
-        af.restart_program()
-
     def dnsFileInfo(self):
         af.MessageBox(title="Info!", message="DNS file was not found\n\nit is now replaced",
                       height=150, width=250, parent=self).wait_window()
         af.restart_program()
-
-    def configReset(self):
-        userInput = af.MessageBox(title="Error", message="Config.json might be corrupted!\n\nReset File?", msgType=1,
-                                  height=150, width=250, parent=self).get_input()
-
-        if userInput is True:
-
-            settingsDict = {
-                'Adapter': adapterName,
-                'Mode': appearanceMode,
-                'Theme': appTheme,
-                'Startup': onStartup
-            }
-
-            with open(configPath, 'w') as jsonFile:
-                json.dump(settingsDict, jsonFile)
-
-            af.restart_program()
-
-        else:
-            af.close_app()
 
     def themes_lost(self):
         af.MessageBox(title="Info!", message="Theme files are missing!\n\nDefault blue will be used",
@@ -343,7 +324,7 @@ class DnsInputWindow(customtkinter.CTkToplevel):
                         af.MessageBox(title="Error", message="The name has already been used!", width=250, parent=self)
                         return
 
-                with open('dns.csv', mode='a', newline='') as dnsFile:
+                with open(dnsFilePath, mode='a', newline='') as dnsFile:
                     writer = csv.writer(dnsFile)
                     writer.writerow([name, prDns, scDns])
                     af.MessageBox(title="Done!", message="The DNS has been added!", width=250, parent=self)
@@ -390,12 +371,15 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.grid_columnconfigure((0, 1, 2), weight=1)
         # Rows
         self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure((1, 2, 3, 4, 5, 6, 7), weight=1)
+        self.grid_rowconfigure((1, 2, 3, 4, 5, 6, 7, 8), weight=1)
         self.iconbitmap(iconPath)
 
         def set_adapter(choice):
             global adapterName
             adapterName = choice
+
+        def open_dns_path():
+            os.system(f"start {dnsFileDir}")
 
         label1 = customtkinter.CTkLabel(self, text="Select Internet Adapter:", font=fontWidget)
         label1.grid(row=0, columnspan=3, pady=(15, 0))
@@ -456,7 +440,10 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.startup_radio2.grid(row=7, column=1, padx=(65, 10), sticky="ew", columnspan=2)
 
         saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
-        saveDns_Button.grid(row=8, columnspan=3, pady=20)
+        saveDns_Button.grid(row=8, column=0, padx=(40, 60), pady=15, columnspan=2)
+
+        open_dns_file = customtkinter.CTkButton(self, text="DNS File", command=open_dns_path, font=fontWidget)
+        open_dns_file.grid(row=8, column=1, padx=(50, 40), pady=15, columnspan=2)
 
         with open(configPath, 'r') as jFile:
             settingsDict = json.load(jFile)
@@ -482,12 +469,6 @@ class SettingsWindow(customtkinter.CTkToplevel):
                 self.startup_radio1.select()
             case "Current":
                 self.startup_radio2.select()
-
-
-    def disable_radios(self):
-        self.theme_radio1.configure(state="disable", text="N/A")
-        self.theme_radio2.configure(state="disable", text="N/A")
-        self.theme_radio3.configure(state="disable", text="N/A")
 
     # Functions
     def save_settings(self):
@@ -555,9 +536,9 @@ def handle_dns_table():
     dnsList = []
 
     try:
-        if path.isfile(dnsFilePath):
+        if os.path.isfile(dnsFilePath):
 
-            with open('dns.csv', mode='r') as file:
+            with open(dnsFilePath, mode='r') as file:
                 csv_reader = csv.reader(file)
                 for row in csv_reader:
                     dnsDict[row[0]] = [row[1], row[2]]
@@ -574,7 +555,7 @@ def handle_dns_table():
                 writer.writerow(['Quad9', "9.9.9.9", "149.112.112.112"])
                 writer.writerow(['OpenDNS', "208.67.222.222", "208.67.220.220"])
 
-            with open('dns.csv', mode='r') as file:
+            with open(dnsFilePath, mode='r') as file:
                 csv_reader = csv.reader(file)
                 for row in csv_reader:
                     dnsDict[row[0]] = [row[1], row[2]]
@@ -591,7 +572,7 @@ def handle_config(force=False):
     global adapterName, settings, appTheme, appearanceMode, configPath, onStartup
 
     try:
-        if path.isfile(configPath) and force is False:
+        if os.path.isfile(configPath) and force is False:
             with open(configPath, 'r') as jsonFile:
                 settings = json.load(jsonFile)
 
@@ -611,11 +592,8 @@ def handle_config(force=False):
             with open(configPath, 'w') as jsonFile:
                 json.dump(settings, jsonFile)
 
-            if force is False:
-                App().configFileInfo()
     except Exception:
-        print("Config must be reset")
-        App().configReset()
+        af.MessageBox(title="Error", message="Something went wrong!\nConfig.json is faulty.")
 
     customtkinter.set_appearance_mode(appearanceMode)
     customtkinter.set_default_color_theme(appTheme)
