@@ -23,13 +23,9 @@ onStartup = "Current"
 
 
 appearanceMode = "system"
-purpleTheme = r"assets\theme-purple.json"
-blueTheme = r"assets\theme-blue.json"
-retroTheme = r"assets\theme-retro.json"
-themesCheck = True
-
-if path.isfile(purpleTheme) is False or path.isfile(blueTheme) is False or path.isfile(retroTheme) is False:
-    themesCheck = False
+purpleTheme = af.resource_path("theme-purple.json")
+blueTheme = af.resource_path("theme-blue.json")
+retroTheme = af.resource_path("theme-retro.json")
 
 appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
@@ -69,8 +65,6 @@ class App(customtkinter.CTk):
             thread.start()
         else:
             self.get_current_dns()
-        if themesCheck is False:
-            self.themes_lost()
 
         # Functions
         def change_dns_values(choice):
@@ -476,11 +470,11 @@ class SettingsWindow(customtkinter.CTkToplevel):
                 self.mode_radio3.select()
 
         match settingsDict['Theme']:
-            case "theme-purple.json":
+            case s if "theme-purple.json" in s:
                 self.theme_radio1.select()
-            case "theme-blue.json":
+            case  s if "theme-blue.json" in s:
                 self.theme_radio2.select()
-            case "theme-retro.json":
+            case  s if "theme-retro.json" in s:
                 self.theme_radio3.select()
 
         match settingsDict['Startup']:
@@ -489,8 +483,6 @@ class SettingsWindow(customtkinter.CTkToplevel):
             case "Current":
                 self.startup_radio2.select()
 
-        if themesCheck is False:
-            self.disable_radios()
 
     def disable_radios(self):
         self.theme_radio1.configure(state="disable", text="N/A")
@@ -625,12 +617,8 @@ def handle_config(force=False):
         print("Config must be reset")
         App().configReset()
 
-    if themesCheck:
-        customtkinter.set_appearance_mode(appearanceMode)
-        customtkinter.set_default_color_theme(appTheme)
-    else:
-        customtkinter.set_appearance_mode(appearanceMode)
-        customtkinter.set_default_color_theme("blue")
+    customtkinter.set_appearance_mode(appearanceMode)
+    customtkinter.set_default_color_theme(appTheme)
 
 
 handle_dns_table()
