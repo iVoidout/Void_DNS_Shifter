@@ -25,11 +25,11 @@ appearanceMode = "system"
 purpleTheme = r"assets\theme-purple.json"
 blueTheme = r"assets\theme-blue.json"
 retroTheme = r"assets\theme-retro.json"
+appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
 
 configPath = r"assets\config.json"
 dnsFilePath = r"dns.csv"
-appTheme = purpleTheme
 
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
@@ -43,7 +43,7 @@ class App(customtkinter.CTk):
 
         self.iconbitmap(iconPath)
         self.geometry(af.center_window(self, 300, 400))
-        self.title("DNS Changer")
+        self.title("Void Shifter")
         self.resizable(False, False)
         self.toplevel_window = None
 
@@ -95,7 +95,7 @@ class App(customtkinter.CTk):
                         check=True
                     )
                 subprocess.run(["ipconfig", "/flushdns"], check=True)
-                af.MessageBox(title="Done!", message=f"{dnsName} has been set!", width=250, parent=self)
+                af.MessageBox(title="Done!", message=f"The DNS has been set!", width=250, parent=self)
 
             except subprocess.CalledProcessError:
                 af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
@@ -103,13 +103,12 @@ class App(customtkinter.CTk):
 
         def reset_dns():
             try:
-
                 subprocess.run(["netsh", "interface", "ip", "set", "dns", adapterName, "source=dhcp"], check=True)
+                subprocess.run(["ipconfig", "/flushdns"], check=True)
                 self.frame.label_primary.configure(text="0.0.0.0")
                 self.frame.label_secondary.configure(text="0.0.0.0")
                 self.setbutton.configure(state="disabled")
                 self.frame.pingResult.set("Ping: 0")
-                subprocess.run(["ipconfig", "/flushdns"], check=True)
                 self.combobox.set("Select DNS")
                 af.show_toplevel(self, af.MessageBox(title="Info!", message="The DNS has been reset!",
                                                      width=250, parent=self))
@@ -151,7 +150,7 @@ class App(customtkinter.CTk):
 
     def configFileInfo(self):
         af.MessageBox(title="Info!", message="Config.json was not found\n\nit is now replaced",
-                      height=150, width=250, parent=self).wait_window()
+                      height=150, width=250, parent=self).get_input()
         af.restart_program()
 
     def dnsFileInfo(self):
@@ -174,6 +173,9 @@ class App(customtkinter.CTk):
 
             with open(configPath, 'w') as jsonFile:
                 json.dump(settingsDict, jsonFile)
+
+            af.restart_program()
+
         else:
             af.close_app()
 
@@ -181,7 +183,8 @@ class App(customtkinter.CTk):
         global adapterAvailable, adapterName
         if adapterList.count(adapterName) == 0:
             adapterName = adapterList[0]
-            af.MessageBox(title="Info!", message=f"The selected adapter is unavailable!\n\n{adapterName} has been selected", width=250, height=130, parent=self)
+            af.MessageBox(title="Info!", message=f"The selected adapter is unavailable!\n\nThe DNS has been selected",
+                          width=250, height=130, parent=self)
             handle_config(force=True)
 
     def get_fastest(self):
@@ -382,7 +385,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.grid_columnconfigure((0, 1, 2), weight=1)
         # Rows
         self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure((1, 2, 3, 4, 5, 6), weight=1)
+        self.grid_rowconfigure((1, 2, 3, 4, 5, 6, 7), weight=1)
         self.iconbitmap(iconPath)
 
         def set_adapter(choice):
@@ -532,6 +535,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
                 startVar = onStartup
 
         return startVar
+
 
 # Get and Update DNS table
 def handle_dns_table():
