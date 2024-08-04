@@ -21,10 +21,16 @@ adapterList = af.get_adapters()
 adapterAvailable = True
 onStartup = "Current"
 
+
 appearanceMode = "system"
 purpleTheme = r"assets\theme-purple.json"
 blueTheme = r"assets\theme-blue.json"
 retroTheme = r"assets\theme-retro.json"
+themesCheck = True
+
+if path.isfile(purpleTheme) is False or path.isfile(blueTheme) is False or path.isfile(retroTheme) is False:
+    themesCheck = False
+
 appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
 
@@ -46,7 +52,6 @@ class App(customtkinter.CTk):
         self.title("Void DNS Shifter")
         self.resizable(False, False)
         self.toplevel_window = None
-
         # Grid Configuration
         # Columns
         self.grid_columnconfigure(0, weight=1)
@@ -64,6 +69,8 @@ class App(customtkinter.CTk):
             thread.start()
         else:
             self.get_current_dns()
+        if themesCheck is False:
+            self.themes_lost()
 
         # Functions
         def change_dns_values(choice):
@@ -179,6 +186,10 @@ class App(customtkinter.CTk):
         else:
             af.close_app()
 
+    def themes_lost(self):
+        af.MessageBox(title="Info!", message="Theme files are missing!\n\ndefault blue will be used",
+                      height=150, width=250, parent=self)
+
     def check_adapter(self):
         global adapterAvailable, adapterName
         if adapterList.count(adapterName) == 0:
@@ -262,7 +273,7 @@ class App(customtkinter.CTk):
             secondarydns = "0.0.0.0"
 
         # self.frame.frameUpdate(pingBool=True)
-        self.after(100, lambda: self.frame.frameUpdate(pingBool=True))
+        self.after(300, lambda: self.frame.frameUpdate(pingBool=True))
         self.after(100, lambda: self.combobox.set("Current DNS"))
 
 
@@ -272,7 +283,7 @@ class AppFrame(customtkinter.CTkFrame):
         super().__init__(master, **kwargs)
 
         self.pingResult = customtkinter.StringVar()
-        self.pingResult.set(value="")
+        self.after(200, self.pingResult.set(value=""))
 
         self.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)  # configure grid system
         self.grid_columnconfigure(0, weight=1)
@@ -284,7 +295,7 @@ class AppFrame(customtkinter.CTkFrame):
         label2.grid(row=2, columnspan=3, pady=(0, 0))
         self.label_secondary = customtkinter.CTkLabel(self, text=secondarydns, font=font)
         self.label_secondary.grid(row=3, columnspan=3, pady=(0, 0))
-        self.label_ping = customtkinter.CTkLabel(self, textvariable=self.pingResult, font=font)
+        self.label_ping = customtkinter.CTkLabel(self, textvariable=self.pingResult, font=font, text="")
         self.label_ping.grid(row=4, columnspan=3, pady=(20, 5), padx=(0, 0))
 
     def frameUpdate(self, pingBool=True):
@@ -478,12 +489,24 @@ class SettingsWindow(customtkinter.CTkToplevel):
             case "Current":
                 self.startup_radio2.select()
 
+        if themesCheck is False:
+            self.disable_radios()
+
+    def disable_radios(self):
+        self.theme_radio1.configure(state="disable", text="N/A")
+        self.theme_radio2.configure(state="disable", text="N/A")
+        self.theme_radio3.configure(state="disable", text="N/A")
+
     # Functions
     def save_settings(self):
         global adapterName, appearanceMode, appTheme, configPath
+        themeChange = False
         try:
             with open(configPath, 'r') as jFile:
                 settingsDict = json.load(jFile)
+
+            if settingsDict['Theme'] != self.theme_radio():
+                themeChange = True
 
             settingsDict['Adapter'] = adapterName
             settingsDict['Mode'] = self.mode_radio()
@@ -494,8 +517,11 @@ class SettingsWindow(customtkinter.CTkToplevel):
                 json.dump(settingsDict, jFile)
 
             handle_config()
+            print(themeChange)
             af.MessageBox(title="Done!", message="The settings have been save!", width=250, parent=self).get_input()
-            af.restart_program()
+
+            if themeChange:
+                af.restart_program()
 
         except WindowsError:
             af.MessageBox(title="Error", message="Something went wrong!", width=250, parent=self)
@@ -557,6 +583,7 @@ def handle_dns_table():
                 writer = csv.writer(dnsFile)
                 writer.writerow(['403', "10.202.10.202", "10.202.10.102"])
                 writer.writerow(['Shecan', "178.22.122.100", "185.51.200.2"])
+                writer.writerow(['Electro', "78.157.42.101", "78.157.42.100"])
                 writer.writerow(['Google', "8.8.8.8", "8.8.4.4"])
                 writer.writerow(['CloudFlair', "1.1.1.1", "1.0.0.1"])
                 writer.writerow(['Quad9', "9.9.9.9", "149.112.112.112"])
@@ -567,7 +594,6 @@ def handle_dns_table():
                 for row in csv_reader:
                     dnsDict[row[0]] = [row[1], row[2]]
                     dnsList.append(row[0])
-
             App().dnsFileInfo()
 
     except Exception:
@@ -603,15 +629,21 @@ def handle_config(force=False):
             if force is False:
                 App().configFileInfo()
     except Exception:
-        print("Unexpected Error!")
+        print("Config must be reset")
         App().configReset()
 
-    customtkinter.set_appearance_mode(appearanceMode)
-    customtkinter.set_default_color_theme(appTheme)
+    if themesCheck:
+        customtkinter.set_appearance_mode(appearanceMode)
+        customtkinter.set_default_color_theme(appTheme)
+    else:
+        customtkinter.set_appearance_mode(appearanceMode)
+        customtkinter.set_default_color_theme("blue")
 
 
-handle_config()
 handle_dns_table()
+handle_config()
 app = App()
+
+
 app.protocol("WM_DELETE_WINDOW", af.on_closing)
 app.mainloop()

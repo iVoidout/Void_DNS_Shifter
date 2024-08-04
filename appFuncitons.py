@@ -1,4 +1,6 @@
 import socket
+import time
+
 from ping3 import ping
 from customtkinter import CTkToplevel, CTkButton, CTkLabel
 import sys
@@ -105,6 +107,7 @@ def resource_path(relative_path):
 
 
 def restart_program():
+    time.sleep(0.5)
     python = sys.executable
     execl(python, python, * sys.argv)
 
