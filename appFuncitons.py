@@ -1,4 +1,6 @@
 import socket
+import time
+
 from ping3 import ping
 from customtkinter import CTkToplevel, CTkButton, CTkLabel
 import sys
