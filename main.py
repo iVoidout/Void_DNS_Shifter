@@ -1,7 +1,7 @@
 import time
 import customtkinter
 import appFuncitons as af
-from os import path
+import os
 import csv
 import json
 import subprocess
@@ -31,7 +31,14 @@ appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
 
 configPath = af.resource_path("config.json")
-dnsFilePath = r"dns.csv"
+
+local_appdata_path = os.getenv('LOCALAPPDATA')
+
+dnsFileDir = local_appdata_path + "\\VOIDSHIFTER"
+
+os.makedirs(dnsFileDir, exist_ok=True)
+
+dnsFilePath = dnsFileDir + "\\dns.csv"
 
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
@@ -364,12 +371,15 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.grid_columnconfigure((0, 1, 2), weight=1)
         # Rows
         self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure((1, 2, 3, 4, 5, 6, 7), weight=1)
+        self.grid_rowconfigure((1, 2, 3, 4, 5, 6, 7, 8), weight=1)
         self.iconbitmap(iconPath)
 
         def set_adapter(choice):
             global adapterName
             adapterName = choice
+
+        def open_dns_path():
+            os.system(f"start {dnsFileDir}")
 
         label1 = customtkinter.CTkLabel(self, text="Select Internet Adapter:", font=fontWidget)
         label1.grid(row=0, columnspan=3, pady=(15, 0))
@@ -430,7 +440,10 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.startup_radio2.grid(row=7, column=1, padx=(65, 10), sticky="ew", columnspan=2)
 
         saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
-        saveDns_Button.grid(row=8, columnspan=3, pady=20)
+        saveDns_Button.grid(row=8, column=0, padx=(40, 60), pady=15, columnspan=2)
+
+        open_dns_file = customtkinter.CTkButton(self, text="DNS File", command=open_dns_path, font=fontWidget)
+        open_dns_file.grid(row=8, column=1, padx=(50, 40), pady=15, columnspan=2)
 
         with open(configPath, 'r') as jFile:
             settingsDict = json.load(jFile)
@@ -523,7 +536,7 @@ def handle_dns_table():
     dnsList = []
 
     try:
-        if path.isfile(dnsFilePath):
+        if os.path.isfile(dnsFilePath):
 
             with open('dns.csv', mode='r') as file:
                 csv_reader = csv.reader(file)
@@ -559,7 +572,7 @@ def handle_config(force=False):
     global adapterName, settings, appTheme, appearanceMode, configPath, onStartup
 
     try:
-        if path.isfile(configPath) and force is False:
+        if os.path.isfile(configPath) and force is False:
             with open(configPath, 'r') as jsonFile:
                 settings = json.load(jsonFile)
 
