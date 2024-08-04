@@ -30,7 +30,7 @@ retroTheme = af.resource_path("theme-retro.json")
 appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
 
-configPath = r"assets\config.json"
+configPath = af.resource_path("config.json")
 dnsFilePath = r"dns.csv"
 
 fontH = ("Cascadia Code", 20, "bold")
@@ -149,36 +149,15 @@ class App(customtkinter.CTk):
     def updateComboBox(self):
         self.combobox.configure(values=dnsList)
 
-    def configFileInfo(self):
-        af.MessageBox(title="Info!", message="Config.json was not found\n\nit is now replaced",
-                      height=150, width=250, parent=self).get_input()
-        af.restart_program()
+    # def configFileInfo(self):
+    #     af.MessageBox(title="Info!", message="Config.json was not found\n\nit is now replaced",
+    #                   height=150, width=250, parent=self).get_input()
+    #     af.restart_program()
 
     def dnsFileInfo(self):
         af.MessageBox(title="Info!", message="DNS file was not found\n\nit is now replaced",
                       height=150, width=250, parent=self).wait_window()
         af.restart_program()
-
-    def configReset(self):
-        userInput = af.MessageBox(title="Error", message="Config.json might be corrupted!\n\nReset File?", msgType=1,
-                                  height=150, width=250, parent=self).get_input()
-
-        if userInput is True:
-
-            settingsDict = {
-                'Adapter': adapterName,
-                'Mode': appearanceMode,
-                'Theme': appTheme,
-                'Startup': onStartup
-            }
-
-            with open(configPath, 'w') as jsonFile:
-                json.dump(settingsDict, jsonFile)
-
-            af.restart_program()
-
-        else:
-            af.close_app()
 
     def themes_lost(self):
         af.MessageBox(title="Info!", message="Theme files are missing!\n\nDefault blue will be used",
@@ -483,12 +462,6 @@ class SettingsWindow(customtkinter.CTkToplevel):
             case "Current":
                 self.startup_radio2.select()
 
-
-    def disable_radios(self):
-        self.theme_radio1.configure(state="disable", text="N/A")
-        self.theme_radio2.configure(state="disable", text="N/A")
-        self.theme_radio3.configure(state="disable", text="N/A")
-
     # Functions
     def save_settings(self):
         global adapterName, appearanceMode, appTheme, configPath
@@ -611,11 +584,10 @@ def handle_config(force=False):
             with open(configPath, 'w') as jsonFile:
                 json.dump(settings, jsonFile)
 
-            if force is False:
-                App().configFileInfo()
     except Exception:
-        print("Config must be reset")
-        App().configReset()
+        # print("Config must be reset")
+        # App().configReset()
+        af.MessageBox(title="Error", message="Something went wrong!\nConfig.json is faulty.")
 
     customtkinter.set_appearance_mode(appearanceMode)
     customtkinter.set_default_color_theme(appTheme)
