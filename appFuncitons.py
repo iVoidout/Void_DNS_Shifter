@@ -46,12 +46,14 @@ def show_toplevel(self, tl_window):
 
 # Message Box
 class MessageBox(CTkToplevel):
-    def __init__(self, parent=None, title="Info!", message="", buttontext="Ok", width=200, height=100, msgType=0):
+    def __init__(self, parent=None, title="Info!", message="", buttontext="Ok", width=200, height=100,
+                 msgType=0, true_button="Yes", false_button="No"):
         super().__init__()
 
         #
         self.title(title)
-        self.geometry(center_window(self if parent is None else parent, width=width, height=height, centerType='parent'))
+        self.geometry(center_window(self if parent is None else parent, width=width, height=height,
+                                    centerType='parent'))
         self.attributes('-topmost', 'true')
         self.grab_set()
         self.focus()
@@ -72,9 +74,9 @@ class MessageBox(CTkToplevel):
             msgbox_button = CTkButton(self, text=buttontext, command=self.button_ok)
             msgbox_button.grid(row=1, pady=(0, 20), padx=30, sticky="news", columnspan=2)
         if msgType == 1:
-            msgbox_yes = CTkButton(self, text="Yes", command=self.button_yes)
+            msgbox_yes = CTkButton(self, text=true_button, command=self.button_yes)
             msgbox_yes.grid(row=1,  column=0, pady=(0, 20), padx=20, sticky="ew")
-            msgbox_no = CTkButton(self, text="No", command=self.button_no)
+            msgbox_no = CTkButton(self, text=false_button, command=self.button_no)
             msgbox_no.grid(row=1, column=1,  pady=(0, 20), padx=20, sticky="ew")
 
     def button_ok(self):

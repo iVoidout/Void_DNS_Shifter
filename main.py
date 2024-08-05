@@ -12,7 +12,10 @@ import requests
 import webbrowser
 
 # variable
-VERSION = "1.1"
+VERSION = "1.1.0"
+githubMain = "https://github.com/iVoidout/Void_DNS_Shifter/"
+githubRelease = "https://github.com/iVoidout/Void_DNS_Shifter/releases/tag/Release"
+githubVersionFIle = "https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt"
 dnsName = ""
 primarydns = "0.0.0.0"
 secondarydns = "0.0.0.0"
@@ -442,10 +445,13 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.startup_radio2.grid(row=7, column=1, padx=(65, 10), sticky="ew", columnspan=2)
 
         open_dns_file = customtkinter.CTkButton(self, text="DNS File", command=open_dns_path, font=fontWidget)
-        open_dns_file.grid(row=8, column=0, padx=(40, 60), pady=10, columnspan=2)
+        open_dns_file.grid(row=8, column=0, padx=10, pady=10)
 
         check_version = customtkinter.CTkButton(self, text="Update", command=self.check_version, font=fontWidget)
-        check_version.grid(row=8, column=1, padx=(50, 40), pady=10, columnspan=2)
+        check_version.grid(row=8, column=1, padx=10, pady=10)
+
+        about_button = customtkinter.CTkButton(self, text="Details", command=self.app_detials, font=fontWidget)
+        about_button.grid(row=8, column=2, padx=10, pady=10)
 
         saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
         saveDns_Button.grid(row=9, columnspan=3, padx=(10, 10), pady=(10, 15))
@@ -535,16 +541,16 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
     def check_version(self):
         try:
-            temp = requests.get("https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt")
+            temp = requests.get(githubVersionFIle)
             temp.raise_for_status()
             latest = temp.text.strip()
             if latest != VERSION:
                 response = af.MessageBox(parent=self, title="Info", message="New update is available!\nOpen github?",
                                          msgType=1, width=250, height=110).get_input()
                 if response is True:
-                    webbrowser.open("https://github.com/iVoidout/Void_DNS_Shifter/releases/tag/Release")
+                    webbrowser.open(githubRelease)
 
-                if response is False:
+                else:
                     af.MessageBox().destroy()
             else:
                 af.MessageBox(parent=self, title="Info", message="You have the latest version")
@@ -552,8 +558,11 @@ class SettingsWindow(customtkinter.CTkToplevel):
         except Exception:
             af.MessageBox(parent=self, title="Info", message="Update check failed!")
 
-
-
+    def app_detials(self):
+        response = af.MessageBox(parent=self, title="Details", message=f"Version: {VERSION}\n\nMade by Dani Abedini",
+                                 msgType=1, true_button="Github", false_button="Close", height=150, width=230).get_input()
+        if response:
+            webbrowser.open(githubMain)
 
 # Get and Update DNS table
 def handle_dns_table():
