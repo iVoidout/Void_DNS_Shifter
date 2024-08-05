@@ -543,9 +543,15 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
     def check_version(self):
         try:
-            temp = requests.get(githubVersionFIle)
-            temp.raise_for_status()
-            latest = temp.text.strip()
+            latest = ""
+            def check_thread():
+                nonlocal latest
+                temp = requests.get(githubVersionFIle)
+                temp.raise_for_status()
+                latest = temp.text.strip()
+            thread = threading.Thread(check_thread())
+            thread.start()
+
             if latest != VERSION:
                 response = af.MessageBox(parent=self, title="Info", message="New update is available!\nOpen github?",
                                          msgType=1, width=250, height=110).get_input()
