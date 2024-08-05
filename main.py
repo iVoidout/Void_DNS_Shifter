@@ -35,15 +35,17 @@ retroTheme = af.resource_path("theme-retro.json")
 appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
 
-configPath = af.resource_path("config.json")
+# configPath = af.resource_path("config.json")
 
 local_appdata_path = os.getenv('LOCALAPPDATA')
 
-dnsFileDir = local_appdata_path + "\\VOIDSHIFTER"
+appLocalFolder = local_appdata_path + "\\VOIDSHIFTER"
 
-os.makedirs(dnsFileDir, exist_ok=True)
+os.makedirs(appLocalFolder, exist_ok=True)
 
-dnsFilePath = dnsFileDir + "\\dns.csv"
+dnsFilePath = appLocalFolder + "\\dns.csv"
+
+configPath = appLocalFolder + "\\config.json"
 
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
@@ -165,13 +167,13 @@ class App(customtkinter.CTk):
                       height=150, width=250, parent=self).wait_window()
         af.restart_program()
 
-    def themes_lost(self):
-        af.MessageBox(title="Info!", message="Theme files are missing!\n\nDefault blue will be used",
-                      height=150, width=250, parent=self)
+    # def themes_lost(self):
+    #     af.MessageBox(title="Info!", message="Theme files are missing!\n\nDefault blue will be used",
+    #                   height=150, width=250, parent=self)
 
     def check_adapter(self):
         af.MessageBox(title="Info!", message=f"The selected adapter is unavailable!\n\n{adapterName} been selected",
-                      width=250, height=130, parent=self)
+                      width=250, height=130, parent=self).wait_window()
 
     def get_fastest(self):
         global primarydns, secondarydns, dnsList, dnsDict, dnsName
@@ -383,8 +385,8 @@ class SettingsWindow(customtkinter.CTkToplevel):
             global adapterName
             adapterName = choice
 
-        def open_dns_path():
-            os.system(f"start {dnsFileDir}")
+        def open_folder():
+            os.system(f"start {appLocalFolder}")
 
         label1 = customtkinter.CTkLabel(self, text="Select Internet Adapter:", font=fontWidget)
         label1.grid(row=0, columnspan=3, pady=(15, 0))
@@ -444,7 +446,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
                                                            font=settingsFont)
         self.startup_radio2.grid(row=7, column=1, padx=(65, 10), sticky="ew", columnspan=2)
 
-        open_dns_file = customtkinter.CTkButton(self, text="DNS File", command=open_dns_path, font=fontWidget)
+        open_dns_file = customtkinter.CTkButton(self, text="Files", command=open_folder, font=fontWidget)
         open_dns_file.grid(row=8, column=0, padx=10, pady=10)
 
         check_version = customtkinter.CTkButton(self, text="Update", command=self.check_version, font=fontWidget)
@@ -618,7 +620,6 @@ def handle_config():
 
         if os.path.isfile(configPath) is False or adapterList.count(adapterName) == 0:
             adapterName = adapterList[0]
-            App().check_adapter()
             settings = {
                 'Adapter': adapterName,
                 'Mode': appearanceMode,
@@ -629,6 +630,8 @@ def handle_config():
             with open(configPath, 'w') as jsonFile:
                 json.dump(settings, jsonFile)
 
+            App().check_adapter()
+            af.restart_program()
     except Exception as e:
         af.MessageBox(title="Error", message="Something went wrong!\nCouldn't handle config.")
         print(e)
