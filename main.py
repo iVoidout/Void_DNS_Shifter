@@ -28,24 +28,28 @@ adapterAvailable = True
 onStartup = "Current"
 
 appearanceMode = "system"
-purpleTheme = af.resource_path("theme-purple.json")
-blueTheme = af.resource_path("theme-blue.json")
-retroTheme = af.resource_path("theme-retro.json")
 
-appTheme = purpleTheme
-iconPath = af.resource_path(r"logo.ico")
-
+# purpleTheme = af.resource_path("theme-purple.json")
+# blueTheme = af.resource_path("theme-blue.json")
+# retroTheme = af.resource_path("theme-retro.json")
 # configPath = af.resource_path("config.json")
 
 local_appdata_path = os.getenv('LOCALAPPDATA')
 
 appLocalFolder = local_appdata_path + "\\VOIDSHIFTER"
-
 os.makedirs(appLocalFolder, exist_ok=True)
 
+
+purpleTheme = appLocalFolder + "\\theme-purple.json"
+blueTheme = appLocalFolder + "\\theme-blue.json"
+retroTheme = appLocalFolder + "\\theme-retro.json"
+configPath = appLocalFolder + "\\config.json"
+
+appTheme = purpleTheme
+iconPath = af.resource_path(r"logo.ico")
+configPath = appLocalFolder + "\\config.json"
 dnsFilePath = appLocalFolder + "\\dns.csv"
 
-configPath = appLocalFolder + "\\config.json"
 
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
@@ -162,18 +166,20 @@ class App(customtkinter.CTk):
     def updateComboBox(self):
         self.combobox.configure(values=dnsList)
 
+    def configFileInfo(self):
+        af.MessageBox(title="Info!", message="Config File has been reset",
+                      height=100, width=250, parent=self).wait_window()
+        af.restart_program()
+
     def dnsFileInfo(self):
         af.MessageBox(title="Info!", message="DNS file was not found\n\nit is now replaced",
                       height=150, width=250, parent=self).wait_window()
         af.restart_program()
 
-    # def themes_lost(self):
-    #     af.MessageBox(title="Info!", message="Theme files are missing!\n\nDefault blue will be used",
-    #                   height=150, width=250, parent=self)
-
     def check_adapter(self):
         af.MessageBox(title="Info!", message=f"The selected adapter is unavailable!\n\n{adapterName} been selected",
                       width=250, height=130, parent=self).wait_window()
+        af.restart_program()
 
     def get_fastest(self):
         global primarydns, secondarydns, dnsList, dnsDict, dnsName
@@ -566,6 +572,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         if response:
             webbrowser.open(githubMain)
 
+
 # Get and Update DNS table
 def handle_dns_table():
     global dnsDict, dnsList, dnsFilePath
@@ -629,9 +636,10 @@ def handle_config():
 
             with open(configPath, 'w') as jsonFile:
                 json.dump(settings, jsonFile)
-
-            App().check_adapter()
-            af.restart_program()
+            if adapterList.count(adapterName) == 0:
+                App().check_adapter()
+            else:
+                App().configFileInfo()
     except Exception as e:
         af.MessageBox(title="Error", message="Something went wrong!\nCouldn't handle config.")
         print(e)

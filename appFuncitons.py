@@ -1,12 +1,11 @@
 import socket
-import time
-
+import os
 from ping3 import ping
 from customtkinter import CTkToplevel, CTkButton, CTkLabel
 import sys
 import threading
 from psutil import net_if_addrs
-from os import path, execl
+
 
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
@@ -103,14 +102,14 @@ def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except Exception:
-        base_path = path.abspath(".")
+        base_path = os.path.abspath(".")
 
-    return path.join(base_path, relative_path)
+    return os.path.join(base_path, relative_path)
 
 
 def restart_program():
     python = sys.executable
-    execl(python, python, * sys.argv)
+    os.execl(python, python, *sys.argv)
 
 
 def is_valid_ip(ip_str):
