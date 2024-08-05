@@ -454,7 +454,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         about_button.grid(row=8, column=2, padx=10, pady=10)
 
         saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
-        saveDns_Button.grid(row=9, columnspan=3, padx=(10, 10), pady=(10, 15))
+        saveDns_Button.grid(row=9, columnspan=3, padx=(10, 10), pady=(5, 15))
 
         with open(configPath, 'r') as jFile:
             settingsDict = json.load(jFile)
