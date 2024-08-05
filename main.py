@@ -40,10 +40,10 @@ appLocalFolder = local_appdata_path + "\\VOIDSHIFTER"
 os.makedirs(appLocalFolder, exist_ok=True)
 
 
-purpleTheme = appLocalFolder + "\\theme-purple.json"
-blueTheme = appLocalFolder + "\\theme-blue.json"
-retroTheme = appLocalFolder + "\\theme-retro.json"
-configPath = appLocalFolder + "\\config.json"
+purpleTheme = "assets\\theme-purple.json"
+blueTheme = "assets\\theme-blue.json"
+retroTheme = "assets\\theme-retro.json"
+configPath = "assets\\config.json"
 
 appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
