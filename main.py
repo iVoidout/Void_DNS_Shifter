@@ -9,6 +9,7 @@ from ping3 import ping
 import threading
 import re
 import requests
+import webbrowser
 
 # variable
 VERSION = "1.1"
@@ -54,7 +55,7 @@ class App(customtkinter.CTk):
 
         self.iconbitmap(iconPath)
         self.geometry(af.center_window(self, 300, 400))
-        self.title("Void DNS Shifter")
+        self.title("Void Shifter")
         self.resizable(False, False)
         self.toplevel_window = None
         # Grid Configuration
@@ -372,8 +373,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         # Columns
         self.grid_columnconfigure((0, 1, 2), weight=1)
         # Rows
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure((1, 2, 3, 4, 5, 6, 7, 8), weight=1)
+        self.grid_rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8, 9), weight=1)
         self.iconbitmap(iconPath)
 
         def set_adapter(choice):
@@ -441,11 +441,14 @@ class SettingsWindow(customtkinter.CTkToplevel):
                                                            font=settingsFont)
         self.startup_radio2.grid(row=7, column=1, padx=(65, 10), sticky="ew", columnspan=2)
 
-        saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
-        saveDns_Button.grid(row=8, column=0, padx=(40, 60), pady=15, columnspan=2)
-
         open_dns_file = customtkinter.CTkButton(self, text="DNS File", command=open_dns_path, font=fontWidget)
-        open_dns_file.grid(row=8, column=1, padx=(50, 40), pady=15, columnspan=2)
+        open_dns_file.grid(row=8, column=0, padx=(40, 60), pady=10, columnspan=2)
+
+        check_version = customtkinter.CTkButton(self, text="Update", command=self.check_version, font=fontWidget)
+        check_version.grid(row=8, column=1, padx=(50, 40), pady=10, columnspan=2)
+
+        saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
+        saveDns_Button.grid(row=9, columnspan=3, padx=(10, 10), pady=(10, 15))
 
         with open(configPath, 'r') as jFile:
             settingsDict = json.load(jFile)
@@ -529,6 +532,20 @@ class SettingsWindow(customtkinter.CTkToplevel):
                 startVar = onStartup
 
         return startVar
+
+    def check_version(self):
+        temp = requests.get("https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt")
+        latest = temp.text.strip()
+        if latest != VERSION:
+            response = af.MessageBox(parent=self, title="Info", message="New update is available!\nOpen github?",
+                                     msgType=1, width=250, height=110).get_input()
+            if response is True:
+                webbrowser.open("https://github.com/iVoidout/Void_DNS_Shifter/releases/tag/Release")
+
+            if response is False:
+                af.MessageBox().destroy()
+        else:
+            af.MessageBox(parent=self, title="Info", message="You have the latest version")
 
 
 # Get and Update DNS table
