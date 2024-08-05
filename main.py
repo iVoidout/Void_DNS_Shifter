@@ -24,15 +24,9 @@ adapterName = adapterList[0]
 dnsDict = {}
 dnsList = []
 settings = {}
-adapterAvailable = True
 onStartup = "Current"
 
 appearanceMode = "system"
-
-# purpleTheme = af.resource_path("theme-purple.json")
-# blueTheme = af.resource_path("theme-blue.json")
-# retroTheme = af.resource_path("theme-retro.json")
-# configPath = af.resource_path("config.json")
 
 local_appdata_path = os.getenv('LOCALAPPDATA')
 
@@ -625,7 +619,9 @@ def handle_config():
             appTheme = settings['Theme']
             onStartup = settings['Startup']
 
-        if os.path.isfile(configPath) is False or adapterList.count(adapterName) == 0:
+        adapterCheck = adapterList.count(adapterName) == 0
+
+        if os.path.isfile(configPath) is False or adapterCheck:
             adapterName = adapterList[0]
             settings = {
                 'Adapter': adapterName,
@@ -636,7 +632,8 @@ def handle_config():
 
             with open(configPath, 'w') as jsonFile:
                 json.dump(settings, jsonFile)
-            if adapterList.count(adapterName) == 0:
+
+            if adapterCheck:
                 App().check_adapter()
             else:
                 App().configFileInfo()
