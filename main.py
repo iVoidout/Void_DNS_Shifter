@@ -16,14 +16,13 @@ VERSION = "1.1"
 dnsName = ""
 primarydns = "0.0.0.0"
 secondarydns = "0.0.0.0"
-adapterName = "Ethernet"
+adapterList = af.get_adapters()
+adapterName = adapterList[0]
 dnsDict = {}
 dnsList = []
 settings = {}
-adapterList = af.get_adapters()
 adapterAvailable = True
 onStartup = "Current"
-
 
 appearanceMode = "system"
 purpleTheme = af.resource_path("theme-purple.json")
@@ -69,7 +68,6 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(2, weight=1)
 
         # Starting Functions
-        self.check_adapter()
         if onStartup == "Fastest":
             thread = threading.Thread(target=self.get_fastest)
             thread.start()
@@ -169,12 +167,8 @@ class App(customtkinter.CTk):
                       height=150, width=250, parent=self)
 
     def check_adapter(self):
-        global adapterAvailable, adapterName
-        if adapterList.count(adapterName) == 0:
-            adapterName = adapterList[0]
-            af.MessageBox(title="Info!", message=f"The selected adapter is unavailable!\n\nThe DNS has been selected",
-                          width=250, height=130, parent=self)
-            handle_config(force=True)
+        af.MessageBox(title="Info!", message=f"The selected adapter is unavailable!\n\n{adapterName} been selected",
+                      width=250, height=130, parent=self)
 
     def get_fastest(self):
         global primarydns, secondarydns, dnsList, dnsDict, dnsName
@@ -236,23 +230,29 @@ class App(customtkinter.CTk):
 
     def get_current_dns(self):
         global primarydns, secondarydns
+        try:
+            res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapterName],
+                                 capture_output=True, text=True, check=True).stdout
+            pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
 
-        res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapterName],
-                             capture_output=True, text=True, check=True).stdout
-        pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
+            match = re.findall(pattern, str(res))
 
-        match = re.findall(pattern, str(res))
+            primarydns = match[0]
 
-        primarydns = match[0]
+            if len(match) != 1:
+                secondarydns = match[1]
+            else:
+                secondarydns = "0.0.0.0"
 
-        if len(match) != 1:
-            secondarydns = match[1]
-        else:
+            self.after(300, lambda: self.frame.frameUpdate(pingBool=True))
+            self.after(100, lambda: self.combobox.set("Current DNS"))
+
+        except Exception:
+            self.after(300, lambda: self.frame.pingResult.set("Ping: 0"))
+            primarydns = "0.0.0.0"
             secondarydns = "0.0.0.0"
-
-        # self.frame.frameUpdate(pingBool=True)
-        self.after(300, lambda: self.frame.frameUpdate(pingBool=True))
-        self.after(100, lambda: self.combobox.set("Current DNS"))
+            self.after(300, lambda: self.frame.frameUpdate(pingBool=False))
+            self.after(100, lambda: self.combobox.set("Current DNS"))
 
 
 # the Information Frame
@@ -261,7 +261,7 @@ class AppFrame(customtkinter.CTkFrame):
         super().__init__(master, **kwargs)
 
         self.pingResult = customtkinter.StringVar()
-        self.after(200, self.pingResult.set(value=""))
+        self.after(200, self.pingResult.set(value="Ping: 0"))
 
         self.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)  # configure grid system
         self.grid_columnconfigure(0, weight=1)
@@ -534,18 +534,25 @@ class SettingsWindow(customtkinter.CTkToplevel):
         return startVar
 
     def check_version(self):
-        temp = requests.get("https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt")
-        latest = temp.text.strip()
-        if latest != VERSION:
-            response = af.MessageBox(parent=self, title="Info", message="New update is available!\nOpen github?",
-                                     msgType=1, width=250, height=110).get_input()
-            if response is True:
-                webbrowser.open("https://github.com/iVoidout/Void_DNS_Shifter/releases/tag/Release")
+        try:
+            temp = requests.get("https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt")
+            temp.raise_for_status()
+            latest = temp.text.strip()
+            if latest != VERSION:
+                response = af.MessageBox(parent=self, title="Info", message="New update is available!\nOpen github?",
+                                         msgType=1, width=250, height=110).get_input()
+                if response is True:
+                    webbrowser.open("https://github.com/iVoidout/Void_DNS_Shifter/releases/tag/Release")
 
-            if response is False:
-                af.MessageBox().destroy()
-        else:
-            af.MessageBox(parent=self, title="Info", message="You have the latest version")
+                if response is False:
+                    af.MessageBox().destroy()
+            else:
+                af.MessageBox(parent=self, title="Info", message="You have the latest version")
+
+        except Exception:
+            af.MessageBox(parent=self, title="Info", message="Update check failed!")
+
+
 
 
 # Get and Update DNS table
@@ -587,11 +594,11 @@ def handle_dns_table():
 
 
 # Handle config.json file
-def handle_config(force=False):
+def handle_config():
     global adapterName, settings, appTheme, appearanceMode, configPath, onStartup
 
     try:
-        if os.path.isfile(configPath) and force is False:
+        if os.path.isfile(configPath):
             with open(configPath, 'r') as jsonFile:
                 settings = json.load(jsonFile)
 
@@ -600,7 +607,9 @@ def handle_config(force=False):
             appTheme = settings['Theme']
             onStartup = settings['Startup']
 
-        else:
+        if os.path.isfile(configPath) is False or adapterList.count(adapterName) == 0:
+            adapterName = adapterList[0]
+            App().check_adapter()
             settings = {
                 'Adapter': adapterName,
                 'Mode': appearanceMode,
@@ -611,8 +620,9 @@ def handle_config(force=False):
             with open(configPath, 'w') as jsonFile:
                 json.dump(settings, jsonFile)
 
-    except Exception:
-        af.MessageBox(title="Error", message="Something went wrong!\nConfig.json is faulty.")
+    except Exception as e:
+        af.MessageBox(title="Error", message="Something went wrong!\nCouldn't handle config.")
+        print(e)
 
     customtkinter.set_appearance_mode(appearanceMode)
     customtkinter.set_default_color_theme(appTheme)
