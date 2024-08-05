@@ -8,8 +8,10 @@ import subprocess
 from ping3 import ping
 import threading
 import re
+import requests
 
 # variable
+VERSION = "1.1"
 dnsName = ""
 primarydns = "0.0.0.0"
 secondarydns = "0.0.0.0"
