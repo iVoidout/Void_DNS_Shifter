@@ -280,6 +280,7 @@ class AppFrame(customtkinter.CTkFrame):
         self.label_secondary.grid(row=3, columnspan=3, pady=(0, 0))
         self.label_ping = customtkinter.CTkLabel(self, textvariable=self.pingResult, font=font, text="")
         self.label_ping.grid(row=4, columnspan=3, pady=(20, 5), padx=(0, 0))
+        self.label_ping.grid(row=4, columnspan=3, pady=(20, 5), padx=(0, 0))
 
     def frameUpdate(self, pingBool=True):
         self.label_primary.configure(text=primarydns)
@@ -449,8 +450,8 @@ class SettingsWindow(customtkinter.CTkToplevel):
         open_dns_file = customtkinter.CTkButton(self, text="Files", command=open_folder, font=fontWidget)
         open_dns_file.grid(row=8, column=0, padx=10, pady=10)
 
-        check_version = customtkinter.CTkButton(self, text="Update", command=self.check_version, font=fontWidget)
-        check_version.grid(row=8, column=1, padx=10, pady=10)
+        self.check_version = customtkinter.CTkButton(self, text="Update", command=self.check_version, font=fontWidget)
+        self.check_version.grid(row=8, column=1, padx=10, pady=10)
 
         about_button = customtkinter.CTkButton(self, text="Details", command=self.app_detials, font=fontWidget)
         about_button.grid(row=8, column=2, padx=10, pady=10)
@@ -545,27 +546,30 @@ class SettingsWindow(customtkinter.CTkToplevel):
         try:
             latest = ""
             def check_thread():
+                self.check_version.configure(text="Checking")
                 nonlocal latest
                 temp = requests.get(githubVersionFIle)
                 temp.raise_for_status()
                 latest = temp.text.strip()
-            thread = threading.Thread(check_thread())
-            thread.start()
+                if latest != VERSION:
+                    self.check_version.configure(text="Update")
+                    response = af.MessageBox(parent=self, title="Info", message="New update is available!\nOpen github?",
+                                             msgType=1, width=250, height=110).get_input()
+                    if response is True:
+                        webbrowser.open(githubRelease)
 
-            if latest != VERSION:
-                response = af.MessageBox(parent=self, title="Info", message="New update is available!\nOpen github?",
-                                         msgType=1, width=250, height=110).get_input()
-                if response is True:
-                    webbrowser.open(githubRelease)
-
+                    else:
+                        af.MessageBox().destroy()
                 else:
-                    af.MessageBox().destroy()
-            else:
-                af.MessageBox(parent=self, title="Info", message="You have the latest version")
+                    self.check_version.configure(text="Update")
+                    af.MessageBox(parent=self, title="Info", message="You have the latest version")
+
+            thread = threading.Thread(target=check_thread)
+            thread.start()
 
         except Exception:
             af.MessageBox(parent=self, title="Info", message="Update check failed!")
-
+            self.check_version.configure(text="Update")
     def app_detials(self):
         response = af.MessageBox(parent=self, title="Details", message=f"Version: {VERSION}\n\nMade by Dani Abedini",
                                  msgType=1, true_button="Github", false_button="Close", height=150, width=230).get_input()
