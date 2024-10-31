@@ -111,8 +111,10 @@ class App(customtkinter.CTk):
                     subprocess.run(["ipconfig", "/flushdns"], check=True)
                     af.MessageBox(title="Done!", message=f"The DNS has been set!", width=250, parent=self)
                     self.setbutton.configure(state="normal")
+                    self.setbutton.configure(text="Set DNS")
 
                 self.setbutton.configure(state="disabled")
+                self.setbutton.configure(text="Wait...")
                 set_thread = threading.Thread(target=set_def)
                 set_thread.start()
 
@@ -120,6 +122,7 @@ class App(customtkinter.CTk):
                 af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
                               parent=self, height=110)
                 self.setbutton.configure(state="normal")
+                self.setbutton.configure(text="Set DNS")
 
         def reset_dns():
             try:
