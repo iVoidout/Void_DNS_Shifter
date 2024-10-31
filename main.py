@@ -101,12 +101,12 @@ class App(customtkinter.CTk):
                 def set_def():
                     subprocess.run(
                         ["netsh", "interface", "ipv4", "set", "dns", adapter_name, "static", primary_dns],
-                        check=True
+                        check=True, shell=True
                     )
                     if secondary_dns != "" or secondary_dns != "0.0.0.0":
                         subprocess.run(
                             ["netsh", "interface", "ipv4", "add", "dns", adapter_name, secondary_dns, "index=2"],
-                            check=True
+                            check=True, shell=True
                         )
                     subprocess.run(["ipconfig", "/flushdns"], check=True)
                     af.MessageBox(title="Done!", message=f"The DNS has been set!", width=250, parent=self)
@@ -125,8 +125,8 @@ class App(customtkinter.CTk):
             try:
                 def reset_def():
                     subprocess.run(["netsh", "interface", "ip", "set", "dns", adapter_name, "source=dhcp"],
-                                   check=True)
-                    subprocess.run(["ipconfig", "/flushdns"], check=True)
+                                   check=True, shell=True)
+                    subprocess.run(["ipconfig", "/flushdns"], check=True, shell=True)
                     self.frame.label_primary.configure(text="0.0.0.0")
                     self.frame.label_secondary.configure(text="0.0.0.0")
                     self.setbutton.configure(state="disabled")
@@ -257,7 +257,7 @@ class App(customtkinter.CTk):
 
                 emptyList = []
                 res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name],
-                                     capture_output=True, text=True, check=True).stdout
+                                     capture_output=True, text=True, check=True, shell=True).stdout
                 pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
 
                 match = re.findall(pattern, str(res))
