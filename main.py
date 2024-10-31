@@ -30,14 +30,12 @@ appearanceMode = "system"
 
 local_appdata_path = os.getenv('LOCALAPPDATA')
 
-appLocalFolder = local_appdata_path + "\\VOIDSHIFTER"
+appLocalFolder = local_appdata_path + "\\Void Shifter"
 os.makedirs(appLocalFolder, exist_ok=True)
-
 
 purpleTheme = "assets\\theme-purple.json"
 blueTheme = "assets\\theme-blue.json"
 retroTheme = "assets\\theme-retro.json"
-configPath = "assets\\config.json"
 
 appTheme = purpleTheme
 iconPath = af.resource_path(r"logo.ico")
@@ -86,6 +84,9 @@ class App(customtkinter.CTk):
                 subThread = threading.Thread(target=self.get_fastest)
                 subThread.start()
 
+            elif choice == "Current":
+                self.get_current_dns()
+                self.setbutton.configure(state="disabled")
             else:
                 dnsName = choice
                 primarydns = dnsDict[choice][0]
@@ -97,17 +98,23 @@ class App(customtkinter.CTk):
         def set_dns():
             global primarydns, secondarydns, adapterName
             try:
-                subprocess.run(
-                    ["netsh", "interface", "ipv4", "set", "dns", adapterName, "static", primarydns],
-                    check=True
-                )
-                if secondarydns != "" or secondarydns != "0.0.0.0":
+                def set_def():
                     subprocess.run(
-                        ["netsh", "interface", "ipv4", "add", "dns", adapterName, secondarydns, "index=2"],
+                        ["netsh", "interface", "ipv4", "set", "dns", adapterName, "static", primarydns],
                         check=True
                     )
-                subprocess.run(["ipconfig", "/flushdns"], check=True)
-                af.MessageBox(title="Done!", message=f"The DNS has been set!", width=250, parent=self)
+                    if secondarydns != "" or secondarydns != "0.0.0.0":
+                        subprocess.run(
+                            ["netsh", "interface", "ipv4", "add", "dns", adapterName, secondarydns, "index=2"],
+                            check=True
+                        )
+                    subprocess.run(["ipconfig", "/flushdns"], check=True)
+                    af.MessageBox(title="Done!", message=f"The DNS has been set!", width=250, parent=self)
+                    self.setbutton.configure(state="normal")
+
+                self.setbutton.configure(state="disabled")
+                set_thread = threading.Thread(target=set_def)
+                set_thread.start()
 
             except subprocess.CalledProcessError:
                 af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
@@ -115,15 +122,21 @@ class App(customtkinter.CTk):
 
         def reset_dns():
             try:
-                subprocess.run(["netsh", "interface", "ip", "set", "dns", adapterName, "source=dhcp"], check=True)
-                subprocess.run(["ipconfig", "/flushdns"], check=True)
-                self.frame.label_primary.configure(text="0.0.0.0")
-                self.frame.label_secondary.configure(text="0.0.0.0")
-                self.setbutton.configure(state="disabled")
-                self.frame.pingResult.set("Ping: 0")
-                self.combobox.set("Select DNS")
-                af.show_toplevel(self, af.MessageBox(title="Info!", message="The DNS has been reset!",
-                                                     width=250, parent=self))
+                def reset_def():
+                    subprocess.run(["netsh", "interface", "ip", "set", "dns", adapterName, "source=dhcp"],
+                                   check=True)
+                    subprocess.run(["ipconfig", "/flushdns"], check=True)
+                    self.frame.label_primary.configure(text="0.0.0.0")
+                    self.frame.label_secondary.configure(text="0.0.0.0")
+                    self.setbutton.configure(state="disabled")
+                    self.frame.pingResult.set("Ping: 0")
+                    self.combobox.set("Select DNS")
+                    af.show_toplevel(self, af.MessageBox(title="Info!", message="The DNS has been reset!",
+                                                         width=250, parent=self))
+
+                thread_reset = threading.Thread(reset_def())
+                thread_reset.start()
+
             except subprocess.CalledProcessError:
                 af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
                               parent=self, height=110)
@@ -140,6 +153,7 @@ class App(customtkinter.CTk):
         ComboList = []
         ComboList.extend(dnsList)
         ComboList.insert(0, "Fastest")
+        ComboList.insert(1, "Current")
 
         self.combobox = customtkinter.CTkComboBox(self, values=ComboList, command=change_dns_values, font=fontWidget)
         self.combobox.grid(row=1, column=0, pady=(0, 10), padx=(30, 0), columnspan=2, sticky="ew")
@@ -229,30 +243,37 @@ class App(customtkinter.CTk):
             self.combobox.configure(state="normal")
             self.combobox.set(fastestName)
 
-        except Exception:
+        except Exception as e:
+            print(e)
             self.after(200, lambda: self.frame.pingResult.set("Couldn't get Fastest"))
             self.combobox.set("Select DNS")
 
     def get_current_dns(self):
-        global primarydns, secondarydns
         try:
-            res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapterName],
-                                 capture_output=True, text=True, check=True).stdout
-            pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
 
-            match = re.findall(pattern, str(res))
+            def current():
+                global primarydns, secondarydns
+                res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapterName],
+                                     capture_output=True, text=True, check=True).stdout
+                pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
 
-            primarydns = match[0]
+                match = re.findall(pattern, str(res))
 
-            if len(match) != 1:
-                secondarydns = match[1]
-            else:
-                secondarydns = "0.0.0.0"
+                primarydns = match[0]
 
-            self.after(300, lambda: self.frame.frameUpdate(pingBool=True))
-            self.after(100, lambda: self.combobox.set("Current DNS"))
+                if len(match) != 1:
+                    secondarydns = match[1]
+                else:
+                    secondarydns = "0.0.0.0"
 
-        except Exception:
+                self.after(300, lambda: self.frame.frameUpdate(pingBool=True))
+                self.after(100, lambda: self.combobox.set("Current DNS"))
+
+            currentThread = threading.Thread(target=current)
+            currentThread.start()
+
+        except Exception as e:
+            print(e)
             self.after(300, lambda: self.frame.pingResult.set("Ping: 0"))
             primarydns = "0.0.0.0"
             secondarydns = "0.0.0.0"
@@ -309,6 +330,7 @@ class DnsInputWindow(customtkinter.CTkToplevel):
 
         # Grid Configuration
         # Columns
+        self.grid_columnconfigure(0, weight=3)
         self.grid_columnconfigure(0, weight=3)
         # Rows
         self.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)
@@ -391,7 +413,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
         label1 = customtkinter.CTkLabel(self, text="Select Internet Adapter:", font=fontWidget)
         label1.grid(row=0, columnspan=3, pady=(15, 0))
-        self.combobox = customtkinter.CTkComboBox(self, values=adapterList, command=set_adapter, font=fontWidget)
+        self.combobox = customtkinter.CTkComboBox(self, values=af.get_adapters(), command=set_adapter, font=fontWidget)
         self.combobox.set(adapterName)
         self.combobox.grid(row=1, columnspan=3)
 
@@ -453,7 +475,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.check_version = customtkinter.CTkButton(self, text="Update", command=self.check_version, font=fontWidget)
         self.check_version.grid(row=8, column=1, padx=10, pady=10)
 
-        about_button = customtkinter.CTkButton(self, text="Details", command=self.app_detials, font=fontWidget)
+        about_button = customtkinter.CTkButton(self, text="Details", command=self.app_details, font=fontWidget)
         about_button.grid(row=8, column=2, padx=10, pady=10)
 
         saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
@@ -567,7 +589,8 @@ class SettingsWindow(customtkinter.CTkToplevel):
             thread = threading.Thread(target=check_thread)
             thread.start()
 
-        except Exception:
+        except Exception as e:
+            print(e)
             af.MessageBox(parent=self, title="Info", message="Update check failed!")
             self.check_version.configure(text="Update")
     def app_detials(self):
@@ -610,8 +633,8 @@ def handle_dns_table():
                     dnsList.append(row[0])
             App().dnsFileInfo()
 
-    except Exception:
-        print("Unexpected Error!")
+    except Exception as e:
+        print(e)
         af.MessageBox(title="Error", message="Somthing went wrong!")
 
 
