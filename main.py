@@ -17,35 +17,35 @@ githubMain = "https://github.com/iVoidout/Void_DNS_Shifter/"
 githubRelease = "https://github.com/iVoidout/Void_DNS_Shifter/releases/tag/Release"
 githubVersionFIle = "https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt"
 dnsName = ""
-primarydns = "0.0.0.0"
-secondarydns = "0.0.0.0"
-adapterList = af.get_adapters()
-adapterName = adapterList[0]
-dnsDict = {}
-dnsList = []
+primary_dns = "0.0.0.0"
+secondary_dns = "0.0.0.0"
+adapter_list = af.get_adapters()
+adapter_name = adapter_list[0]
+dns_dict = {}
+dns_list = []
 settings = {}
-onStartup = "Current"
+on_startup = "Current"
 
-appearanceMode = "system"
+appearance_mode = "system"
 
 local_appdata_path = os.getenv('LOCALAPPDATA')
 
-appLocalFolder = local_appdata_path + "\\Void Shifter"
-os.makedirs(appLocalFolder, exist_ok=True)
+app_local_folder = local_appdata_path + "\\Void Shifter"
+os.makedirs(app_local_folder, exist_ok=True)
 
 purpleTheme = "assets\\theme-purple.json"
 blueTheme = "assets\\theme-blue.json"
 retroTheme = "assets\\theme-retro.json"
 
-appTheme = purpleTheme
-iconPath = af.resource_path(r"logo.ico")
-configPath = appLocalFolder + "\\config.json"
-dnsFilePath = appLocalFolder + "\\dns.csv"
+app_theme = purpleTheme
+icon_path = af.resource_path(r"logo.ico")
+config_path = app_local_folder + "\\config.json"
+dns_file_path = app_local_folder + "\\dns.csv"
 
 
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
-fontWidget = ("Cascadia Code", 14, "normal")
+font_widget = ("Cascadia Code", 14, "normal")
 
 
 # Main Window
@@ -53,7 +53,7 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
-        self.iconbitmap(iconPath)
+        self.iconbitmap(icon_path)
         self.geometry(af.center_window(self, 300, 400))
         self.title("Void Shifter")
         self.resizable(False, False)
@@ -69,7 +69,7 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(2, weight=1)
 
         # Starting Functions
-        if onStartup == "Fastest":
+        if on_startup == "Fastest":
             thread = threading.Thread(target=self.get_fastest)
             thread.start()
         else:
@@ -77,7 +77,7 @@ class App(customtkinter.CTk):
 
         # Functions
         def change_dns_values(choice):
-            global primarydns, secondarydns, dnsList, dnsDict, dnsName
+            global primary_dns, secondary_dns, dns_list, dns_dict, dnsName
 
             # try:
             if choice == "Fastest":
@@ -89,23 +89,23 @@ class App(customtkinter.CTk):
                 self.setbutton.configure(state="disabled")
             else:
                 dnsName = choice
-                primarydns = dnsDict[choice][0]
-                secondarydns = dnsDict[choice][1]
+                primary_dns = dns_dict[choice][0]
+                secondary_dns = dns_dict[choice][1]
 
                 self.frame.frameUpdate()
                 self.setbutton.configure(state="normal")
 
         def set_dns():
-            global primarydns, secondarydns, adapterName
+            global primary_dns, secondary_dns, adapter_name
             try:
                 def set_def():
                     subprocess.run(
-                        ["netsh", "interface", "ipv4", "set", "dns", adapterName, "static", primarydns],
+                        ["netsh", "interface", "ipv4", "set", "dns", adapter_name, "static", primary_dns],
                         check=True
                     )
-                    if secondarydns != "" or secondarydns != "0.0.0.0":
+                    if secondary_dns != "" or secondary_dns != "0.0.0.0":
                         subprocess.run(
-                            ["netsh", "interface", "ipv4", "add", "dns", adapterName, secondarydns, "index=2"],
+                            ["netsh", "interface", "ipv4", "add", "dns", adapter_name, secondary_dns, "index=2"],
                             check=True
                         )
                     subprocess.run(["ipconfig", "/flushdns"], check=True)
@@ -124,7 +124,7 @@ class App(customtkinter.CTk):
         def reset_dns():
             try:
                 def reset_def():
-                    subprocess.run(["netsh", "interface", "ip", "set", "dns", adapterName, "source=dhcp"],
+                    subprocess.run(["netsh", "interface", "ip", "set", "dns", adapter_name, "source=dhcp"],
                                    check=True)
                     subprocess.run(["ipconfig", "/flushdns"], check=True)
                     self.frame.label_primary.configure(text="0.0.0.0")
@@ -152,17 +152,17 @@ class App(customtkinter.CTk):
         self.frame.grid(row=0, columnspan=3, sticky="news", pady=(20, 20), padx=20)
 
         ComboList = []
-        ComboList.extend(dnsList)
+        ComboList.extend(dns_list)
         ComboList.insert(0, "Fastest")
         ComboList.insert(1, "Current")
 
-        self.combobox = customtkinter.CTkComboBox(self, values=ComboList, command=change_dns_values, font=fontWidget)
+        self.combobox = customtkinter.CTkComboBox(self, values=ComboList, command=change_dns_values, font=font_widget)
         self.combobox.grid(row=1, column=0, pady=(0, 10), padx=(30, 0), columnspan=2, sticky="ew")
 
         addbutton = customtkinter.CTkButton(self, text="+", width=40, command=add_dns)
         addbutton.grid(row=1, column=2, pady=(0, 10), padx=(20, 30), sticky="ew")
 
-        self.setbutton = customtkinter.CTkButton(self, text="Set DNS", command=set_dns, font=fontWidget)
+        self.setbutton = customtkinter.CTkButton(self, text="Set DNS", command=set_dns, font=font_widget)
         self.setbutton.grid(row=2, column=0, pady=(0, 20), padx=(30, 0), sticky="ew")
         self.setbutton.configure(state="disabled")
         settingsButton = customtkinter.CTkButton(self, text="⚙", width=30, command=settingsOpen)
@@ -173,7 +173,7 @@ class App(customtkinter.CTk):
         resetbutton.grid(row=2, column=2, pady=(0, 20), padx=(10, 30), sticky="ew")
 
     def updateComboBox(self):
-        self.combobox.configure(values=dnsList)
+        self.combobox.configure(values=dns_list)
 
     def configFileInfo(self):
         af.MessageBox(title="Info!", message="Config File has been reset",
@@ -186,12 +186,12 @@ class App(customtkinter.CTk):
         af.restart_program()
 
     def check_adapter(self):
-        af.MessageBox(title="Info!", message=f"The selected adapter is unavailable!\n\n{adapterName} been selected",
+        af.MessageBox(title="Info!", message=f"The selected adapter is unavailable!\n\n{adapter_name} been selected",
                       width=250, height=130, parent=self).wait_window()
         af.restart_program()
 
     def get_fastest(self):
-        global primarydns, secondarydns, dnsList, dnsDict, dnsName
+        global primary_dns, secondary_dns, dns_list, dns_dict, dnsName
 
         statusText = "Finding Fastest"
         self.after(200, lambda: self.frame.pingResult.set(statusText))
@@ -218,8 +218,8 @@ class App(customtkinter.CTk):
             resultList = [0]
             fastest = 99999999
             fastestName = ""
-            for name in dnsList:
-                ip = dnsDict[name][0]
+            for name in dns_list:
+                ip = dns_dict[name][0]
                 self.combobox.set(name)
                 latency = ping(ip)
                 if latency is not None:
@@ -235,8 +235,8 @@ class App(customtkinter.CTk):
 
             stop_event_dots.set()
             dnsName = fastestName
-            primarydns = dnsDict[fastestName][0]
-            secondarydns = dnsDict[fastestName][1]
+            primary_dns = dns_dict[fastestName][0]
+            secondary_dns = dns_dict[fastestName][1]
 
             self.frame.frameUpdate(pingBool=False)
             self.after(250, lambda: self.frame.pingResult.set(f"Ping: {fastest}"))
@@ -253,22 +253,30 @@ class App(customtkinter.CTk):
         try:
 
             def current():
-                global primarydns, secondarydns
-                res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapterName],
+                global primary_dns, secondary_dns
+
+                emptyList = []
+                res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name],
                                      capture_output=True, text=True, check=True).stdout
                 pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
 
                 match = re.findall(pattern, str(res))
 
-                primarydns = match[0]
+                if match != emptyList:
+                    primary_dns = match[0]
 
-                if len(match) != 1:
-                    secondarydns = match[1]
+                    if len(match) != 1:
+                        secondary_dns = match[1]
+
+                    else:
+                        secondary_dns = "0.0.0.0"
+
+                    self.after(300, lambda: self.frame.frameUpdate(pingBool=True))
+                    self.after(100, lambda: self.combobox.set("Current DNS"))
+
                 else:
-                    secondarydns = "0.0.0.0"
-
-                self.after(300, lambda: self.frame.frameUpdate(pingBool=True))
-                self.after(100, lambda: self.combobox.set("Current DNS"))
+                    secondary_dns = "0.0.0.0"
+                    self.after(100, lambda: self.combobox.set("Current DNS"))
 
             currentThread = threading.Thread(target=current)
             currentThread.start()
@@ -276,8 +284,8 @@ class App(customtkinter.CTk):
         except Exception as e:
             print(e)
             self.after(300, lambda: self.frame.pingResult.set("Ping: 0"))
-            primarydns = "0.0.0.0"
-            secondarydns = "0.0.0.0"
+            primary_dns = "0.0.0.0"
+            secondary_dns = "0.0.0.0"
             self.after(300, lambda: self.frame.frameUpdate(pingBool=False))
             self.after(100, lambda: self.combobox.set("Current DNS"))
 
@@ -294,27 +302,27 @@ class AppFrame(customtkinter.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         label1 = customtkinter.CTkLabel(self, text="PRIMARY DNS:", font=fontH)
         label1.grid(row=0, column=0, pady=(10, 0), sticky="ew")
-        self.label_primary = customtkinter.CTkLabel(self, text=primarydns, font=font)
+        self.label_primary = customtkinter.CTkLabel(self, text=primary_dns, font=font)
         self.label_primary.grid(row=1, pady=(0, 0))
         label2 = customtkinter.CTkLabel(self, text="SECONDARY DNS:", font=fontH)
         label2.grid(row=2, columnspan=3, pady=(0, 0))
-        self.label_secondary = customtkinter.CTkLabel(self, text=secondarydns, font=font)
+        self.label_secondary = customtkinter.CTkLabel(self, text=secondary_dns, font=font)
         self.label_secondary.grid(row=3, columnspan=3, pady=(0, 0))
         self.label_ping = customtkinter.CTkLabel(self, textvariable=self.pingResult, font=font, text="")
         self.label_ping.grid(row=4, columnspan=3, pady=(20, 5), padx=(0, 0))
         self.label_ping.grid(row=4, columnspan=3, pady=(20, 5), padx=(0, 0))
 
     def frameUpdate(self, pingBool=True):
-        self.label_primary.configure(text=primarydns)
+        self.label_primary.configure(text=primary_dns)
 
-        if af.is_valid_ip(str(secondarydns)):
-            self.label_secondary.configure(text=secondarydns)
+        if af.is_valid_ip(str(secondary_dns)):
+            self.label_secondary.configure(text=secondary_dns)
         else:
             self.label_secondary.configure(text="0.0.0.0")
 
         if pingBool:
             self.pingResult.set("Pinging...")
-            af.start_threading(af.get_ping_frame, ip=primarydns, result=self.pingResult)
+            af.start_threading(af.get_ping_frame, ip=primary_dns, result=self.pingResult)
 
 
 # Add DNS window
@@ -322,7 +330,7 @@ class DnsInputWindow(customtkinter.CTkToplevel):
     def __init__(self):
         super().__init__()
 
-        self.iconbitmap(iconPath)
+        self.iconbitmap(icon_path)
         self.geometry(af.center_window(app, 200, 300, centerType='parent'))
         self.title("Add")
         self.toplevel_window = None
@@ -351,12 +359,12 @@ class DnsInputWindow(customtkinter.CTkToplevel):
                 af.MessageBox(title="Error", message="The Primary DNS is not valid!", parent=self)
 
             else:
-                for i in dnsList:
+                for i in dns_list:
                     if i == name:
                         af.MessageBox(title="Error", message="The name has already been used!", width=250, parent=self)
                         return
 
-                with open(dnsFilePath, mode='a', newline='') as dnsFile:
+                with open(dns_file_path, mode='a', newline='') as dnsFile:
                     writer = csv.writer(dnsFile)
                     writer.writerow([name, prDns, scDns])
                     af.MessageBox(title="Done!", message="The DNS has been added!", width=250, parent=self)
@@ -367,16 +375,16 @@ class DnsInputWindow(customtkinter.CTkToplevel):
                 if scDns_entry.get() != "":
                     scDns.delete(0, customtkinter.END)
 
-        label1 = customtkinter.CTkLabel(self, text="Add Custom DNS", font=fontWidget)
+        label1 = customtkinter.CTkLabel(self, text="Add Custom DNS", font=font_widget)
         label1.grid(row=0, pady=(10, 0))
-        name_entry = customtkinter.CTkEntry(self, placeholder_text="Name", font=fontWidget)
+        name_entry = customtkinter.CTkEntry(self, placeholder_text="Name", font=font_widget)
         name_entry.grid(row=1)
-        prDns_entry = customtkinter.CTkEntry(self, placeholder_text="Primary", font=fontWidget)
+        prDns_entry = customtkinter.CTkEntry(self, placeholder_text="Primary", font=font_widget)
         prDns_entry.grid(row=2)
-        scDns_entry = customtkinter.CTkEntry(self, placeholder_text="Secondary", font=fontWidget)
+        scDns_entry = customtkinter.CTkEntry(self, placeholder_text="Secondary", font=font_widget)
         scDns_entry.grid(row=3)
 
-        saveDns_Button = customtkinter.CTkButton(self, text="Save", command=save_dns, font=fontWidget)
+        saveDns_Button = customtkinter.CTkButton(self, text="Save", command=save_dns, font=font_widget)
         saveDns_Button.grid(row=4, pady=10)
 
 
@@ -387,7 +395,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
         settingsFont = ("Cascadia Code", 12, "normal")
 
-        self.iconbitmap(iconPath)
+        self.iconbitmap(icon_path)
         self.geometry(af.center_window(app, 300, 450, centerType='parent'))
         self.title("Settings")
         self.toplevel_window = None
@@ -403,22 +411,28 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.grid_columnconfigure((0, 1, 2), weight=1)
         # Rows
         self.grid_rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8, 9), weight=1)
-        self.iconbitmap(iconPath)
+        self.iconbitmap(icon_path)
+
+        global adapter_list, adapter_name
+        adapter_list = af.get_adapters()
 
         def set_adapter(choice):
-            global adapterName
-            adapterName = choice
+            global adapter_name
+            adapter_name = choice
 
         def open_folder():
-            os.system(f"start {appLocalFolder}")
+            os.system(f"start {app_local_folder}")
 
-        label1 = customtkinter.CTkLabel(self, text="Select Internet Adapter:", font=fontWidget)
+        label1 = customtkinter.CTkLabel(self, text="Select Internet Adapter:", font=font_widget)
         label1.grid(row=0, columnspan=3, pady=(15, 0))
-        self.combobox = customtkinter.CTkComboBox(self, values=af.get_adapters(), command=set_adapter, font=fontWidget)
-        self.combobox.set(adapterName)
+        self.combobox = customtkinter.CTkComboBox(self, values=af.get_adapters(), command=set_adapter, font=font_widget)
+        if adapter_name not in adapter_list:
+            adapter_name = adapter_list[0]
+
+        self.combobox.set(adapter_name)
         self.combobox.grid(row=1, columnspan=3)
 
-        label2 = customtkinter.CTkLabel(self, text="Appearance Mode:", font=fontWidget)
+        label2 = customtkinter.CTkLabel(self, text="Appearance Mode:", font=font_widget)
         label2.grid(row=2, columnspan=3, pady=(10, 0))
 
         rb_Size = 20
@@ -439,7 +453,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
                                                         font=settingsFont)
         self.mode_radio3.grid(row=3, column=2, padx=10, sticky="ew")
 
-        label2 = customtkinter.CTkLabel(self, text="Theme Color:", font=fontWidget)
+        label2 = customtkinter.CTkLabel(self, text="Theme Color:", font=font_widget)
         label2.grid(row=4, columnspan=3, pady=(10, 0))
         self.theme_radio1 = customtkinter.CTkRadioButton(self, text="Purple", value=0, command=self.theme_radio,
                                                          variable=self.radio_var_theme,
@@ -457,7 +471,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
                                                          font=settingsFont)
         self.theme_radio3.grid(row=5, column=2, padx=10, sticky="ew")
 
-        label2 = customtkinter.CTkLabel(self, text="Startup:", font=fontWidget)
+        label2 = customtkinter.CTkLabel(self, text="Startup:", font=font_widget)
         label2.grid(row=6, columnspan=3, pady=(10, 0))
         self.startup_radio1 = customtkinter.CTkRadioButton(self, text="Fastest DNS", value=0, command=self.startup_radio,
                                                            variable=self.radio_var_startup,
@@ -470,19 +484,19 @@ class SettingsWindow(customtkinter.CTkToplevel):
                                                            font=settingsFont)
         self.startup_radio2.grid(row=7, column=1, padx=(65, 10), sticky="ew", columnspan=2)
 
-        open_dns_file = customtkinter.CTkButton(self, text="Files", command=open_folder, font=fontWidget)
+        open_dns_file = customtkinter.CTkButton(self, text="Files", command=open_folder, font=font_widget)
         open_dns_file.grid(row=8, column=0, padx=10, pady=10)
 
-        self.check_version = customtkinter.CTkButton(self, text="Update", command=self.check_version, font=fontWidget)
+        self.check_version = customtkinter.CTkButton(self, text="Update", command=self.check_version, font=font_widget)
         self.check_version.grid(row=8, column=1, padx=10, pady=10)
 
-        about_button = customtkinter.CTkButton(self, text="Details", command=self.app_details, font=fontWidget)
+        about_button = customtkinter.CTkButton(self, text="Details", command=self.app_details, font=font_widget)
         about_button.grid(row=8, column=2, padx=10, pady=10)
 
-        saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=fontWidget)
+        saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=font_widget)
         saveDns_Button.grid(row=9, columnspan=3, padx=(10, 10), pady=(5, 15))
 
-        with open(configPath, 'r') as jFile:
+        with open(config_path, 'r') as jFile:
             settingsDict = json.load(jFile)
 
         match settingsDict['Mode']:
@@ -509,17 +523,17 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
     # Functions
     def save_settings(self):
-        global adapterName, appearanceMode, appTheme, configPath
+        global adapter_name, appearance_mode, app_theme, config_path
         try:
-            with open(configPath, 'r') as jFile:
+            with open(config_path, 'r') as jFile:
                 settingsDict = json.load(jFile)
 
-            settingsDict['Adapter'] = adapterName
+            settingsDict['Adapter'] = adapter_name
             settingsDict['Mode'] = self.mode_radio()
             settingsDict['Theme'] = self.theme_radio()
             settingsDict['Startup'] = self.startup_radio()
 
-            with open(configPath, 'w') as jFile:
+            with open(config_path, 'w') as jFile:
                 json.dump(settingsDict, jFile)
 
             af.MessageBox(title="Done!", message="The settings have been save!", width=250, parent=self).get_input()
@@ -538,7 +552,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
             case 2:
                 modeVar = "light"
             case _:
-                modeVar = appearanceMode
+                modeVar = appearance_mode
         return modeVar
 
     def theme_radio(self):
@@ -561,7 +575,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
             case 1:
                 startVar = "Current"
             case _:
-                startVar = onStartup
+                startVar = on_startup
 
         return startVar
 
@@ -606,21 +620,21 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
 # Get and Update DNS table
 def handle_dns_table():
-    global dnsDict, dnsList, dnsFilePath
-    dnsDict = {}
-    dnsList = []
+    global dns_dict, dns_list, dns_file_path
+    dns_dict = {}
+    dns_list = []
 
     try:
-        if os.path.isfile(dnsFilePath):
+        if os.path.isfile(dns_file_path):
 
-            with open(dnsFilePath, mode='r') as file:
+            with open(dns_file_path, mode='r') as file:
                 csv_reader = csv.reader(file)
                 for row in csv_reader:
-                    dnsDict[row[0]] = [row[1], row[2]]
-                    dnsList.append(row[0])
+                    dns_dict[row[0]] = [row[1], row[2]]
+                    dns_list.append(row[0])
 
         else:
-            with open(dnsFilePath, mode='w', newline='') as dnsFile:
+            with open(dns_file_path, mode='w', newline='') as dnsFile:
                 writer = csv.writer(dnsFile)
                 writer.writerow(['403', "10.202.10.202", "10.202.10.102"])
                 writer.writerow(['Shecan', "178.22.122.100", "185.51.200.2"])
@@ -630,11 +644,11 @@ def handle_dns_table():
                 writer.writerow(['Quad9', "9.9.9.9", "149.112.112.112"])
                 writer.writerow(['OpenDNS', "208.67.222.222", "208.67.220.220"])
 
-            with open(dnsFilePath, mode='r') as file:
+            with open(dns_file_path, mode='r') as file:
                 csv_reader = csv.reader(file)
                 for row in csv_reader:
-                    dnsDict[row[0]] = [row[1], row[2]]
-                    dnsList.append(row[0])
+                    dns_dict[row[0]] = [row[1], row[2]]
+                    dns_list.append(row[0])
             App().dnsFileInfo()
 
     except Exception as e:
@@ -644,30 +658,30 @@ def handle_dns_table():
 
 # Handle config.json file
 def handle_config():
-    global adapterName, settings, appTheme, appearanceMode, configPath, onStartup
+    global adapter_name, settings, app_theme, appearance_mode, config_path, on_startup
 
     try:
-        if os.path.isfile(configPath):
-            with open(configPath, 'r') as jsonFile:
+        if os.path.isfile(config_path):
+            with open(config_path, 'r') as jsonFile:
                 settings = json.load(jsonFile)
 
-            adapterName = settings['Adapter']
-            appearanceMode = settings['Mode']
-            appTheme = settings['Theme']
-            onStartup = settings['Startup']
+            adapter_name = settings['Adapter']
+            appearance_mode = settings['Mode']
+            app_theme = settings['Theme']
+            on_startup = settings['Startup']
 
-        adapterCheck = adapterList.count(adapterName) == 0
+        adapterCheck = adapter_list.count(adapter_name) == 0
 
-        if os.path.isfile(configPath) is False or adapterCheck:
-            adapterName = adapterList[0]
+        if os.path.isfile(config_path) is False or adapterCheck:
+            adapter_name = adapter_list[0]
             settings = {
-                'Adapter': adapterName,
-                'Mode': appearanceMode,
+                'Adapter': adapter_name,
+                'Mode': appearance_mode,
                 'Theme': purpleTheme,
-                'Startup': onStartup
+                'Startup': on_startup
             }
 
-            with open(configPath, 'w') as jsonFile:
+            with open(config_path, 'w') as jsonFile:
                 json.dump(settings, jsonFile)
 
             if adapterCheck:
@@ -678,8 +692,8 @@ def handle_config():
         af.MessageBox(title="Error", message="Something went wrong!\nCouldn't handle config.")
         print(e)
 
-    customtkinter.set_appearance_mode(appearanceMode)
-    customtkinter.set_default_color_theme(appTheme)
+    customtkinter.set_appearance_mode(appearance_mode)
+    customtkinter.set_default_color_theme(app_theme)
 
 
 handle_dns_table()

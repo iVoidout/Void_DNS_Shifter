@@ -125,10 +125,13 @@ def close_app():
 
 
 def get_ping_frame(ip, result):
-    latency = ping(ip)
-    if latency is not None:
-        result.set(f"Ping: {latency * 1000:.0f}")
-    else: 
+    if is_valid_ip(ip):
+        latency = ping(ip)
+        if latency is not None:
+            result.set(f"Ping: {latency * 1000:.0f}")
+        else:
+            result.set("Ping: N/A")
+    else:
         result.set("Ping: N/A")
 
 
