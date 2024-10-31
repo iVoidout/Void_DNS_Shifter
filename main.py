@@ -14,7 +14,7 @@ import webbrowser
 # variable
 VERSION = "1.2.0"
 githubMain = "https://github.com/iVoidout/Void_DNS_Shifter/"
-githubRelease = "https://github.com/iVoidout/Void_DNS_Shifter/releases/tag/Release"
+githubRelease = "https://github.com/iVoidout/Void_DNS_Shifter/releases"
 githubVersionFIle = "https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt"
 dnsName = ""
 primary_dns = "0.0.0.0"
