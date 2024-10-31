@@ -149,6 +149,7 @@ class App(customtkinter.CTk):
             af.show_toplevel(self, DnsInputWindow())
 
         def settingsOpen():
+            self.toplevel_window = None
             af.show_toplevel(self, SettingsWindow())
 
         self.frame = AppFrame(self, fg_color="transparent")
@@ -292,7 +293,6 @@ class App(customtkinter.CTk):
             self.after(300, lambda: self.frame.frameUpdate(pingBool=False))
             self.after(100, lambda: self.combobox.set("Current DNS"))
 
-
 # the Information Frame
 class AppFrame(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -426,6 +426,10 @@ class SettingsWindow(customtkinter.CTkToplevel):
         def open_folder():
             os.system(f"start {app_local_folder}")
 
+        def close_window():
+            self.grab_release()
+            self.withdraw()
+
         label1 = customtkinter.CTkLabel(self, text="Select Internet Adapter:", font=font_widget)
         label1.grid(row=0, columnspan=3, pady=(15, 0))
         self.combobox = customtkinter.CTkComboBox(self, values=af.get_adapters(), command=set_adapter, font=font_widget)
@@ -496,8 +500,13 @@ class SettingsWindow(customtkinter.CTkToplevel):
         about_button = customtkinter.CTkButton(self, text="Details", command=self.app_details, font=font_widget)
         about_button.grid(row=8, column=2, padx=10, pady=10)
 
-        saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=font_widget)
-        saveDns_Button.grid(row=9, columnspan=3, padx=(10, 10), pady=(5, 15))
+        saveDns_Button = customtkinter.CTkButton(self, text="Save", command=self.save_settings, font=font_widget,
+                                                 width=100)
+        saveDns_Button.grid(row=9, columnspan=3, padx=(10, 150), pady=(5, 15))
+
+        cancel_button = customtkinter.CTkButton(self, text="Cancel", command=close_window, font=font_widget,
+                                                width=100)
+        cancel_button.grid(row=9, columnspan=3, padx=(150, 10), pady=(5, 15))
 
         with open(config_path, 'r') as jFile:
             settingsDict = json.load(jFile)
