@@ -12,7 +12,7 @@ import requests
 import webbrowser
 
 # variable
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 githubMain = "https://github.com/iVoidout/Void_DNS_Shifter/"
 githubRelease = "https://github.com/iVoidout/Void_DNS_Shifter/releases/tag/Release"
 githubVersionFIle = "https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt"
@@ -119,6 +119,7 @@ class App(customtkinter.CTk):
             except subprocess.CalledProcessError:
                 af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
                               parent=self, height=110)
+                self.setbutton.configure(state="normal")
 
         def reset_dns():
             try:
@@ -567,6 +568,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
     def check_version(self):
         try:
             latest = ""
+
             def check_thread():
                 self.check_version.configure(text="Checking")
                 nonlocal latest
@@ -593,9 +595,11 @@ class SettingsWindow(customtkinter.CTkToplevel):
             print(e)
             af.MessageBox(parent=self, title="Info", message="Update check failed!")
             self.check_version.configure(text="Update")
-    def app_detials(self):
+
+    def app_details(self):
         response = af.MessageBox(parent=self, title="Details", message=f"Version: {VERSION}\n\nMade by Dani Abedini",
-                                 msgType=1, true_button="Github", false_button="Close", height=150, width=230).get_input()
+                                 msgType=1, true_button="Github", false_button="Close", height=150,
+                                 width=230).get_input()
         if response:
             webbrowser.open(githubMain)
 
