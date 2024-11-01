@@ -30,7 +30,7 @@ appearance_mode = "system"
 
 local_appdata_path = os.getenv('LOCALAPPDATA')
 
-app_local_folder = local_appdata_path + "\\Void Shifter"
+app_local_folder = local_appdata_path + "\\VOIDSHIFTER"
 os.makedirs(app_local_folder, exist_ok=True)
 
 purple_theme = "assets\\theme-purple.json"
