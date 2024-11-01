@@ -12,7 +12,7 @@ import requests
 import webbrowser
 
 # variable
-VERSION = "1.2.1"
+VERSION = "1.2.0"
 github_main = "https://github.com/iVoidout/Void_DNS_Shifter/"
 github_release = "https://github.com/iVoidout/Void_DNS_Shifter/releases"
 github_version_file = "https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt"
@@ -272,7 +272,6 @@ class App(customtkinter.CTk):
                            r'[1-9]?[0-9])\b')
 
                 match = re.findall(pattern, str(res))
-
                 if match != emptyList:
                     primary_dns = match[0]
 
