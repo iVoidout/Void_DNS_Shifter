@@ -12,11 +12,11 @@ import requests
 import webbrowser
 
 # variable
-VERSION = "1.2.0"
-githubMain = "https://github.com/iVoidout/Void_DNS_Shifter/"
-githubRelease = "https://github.com/iVoidout/Void_DNS_Shifter/releases"
-githubVersionFIle = "https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt"
-dnsName = ""
+VERSION = "1.2.1"
+github_main = "https://github.com/iVoidout/Void_DNS_Shifter/"
+github_release = "https://github.com/iVoidout/Void_DNS_Shifter/releases"
+github_version_file = "https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt"
+dns_name = ""
 primary_dns = "0.0.0.0"
 secondary_dns = "0.0.0.0"
 adapter_list = af.get_adapters()
@@ -33,11 +33,11 @@ local_appdata_path = os.getenv('LOCALAPPDATA')
 app_local_folder = local_appdata_path + "\\Void Shifter"
 os.makedirs(app_local_folder, exist_ok=True)
 
-purpleTheme = "assets\\theme-purple.json"
-blueTheme = "assets\\theme-blue.json"
-retroTheme = "assets\\theme-retro.json"
+purple_theme = "assets\\theme-purple.json"
+blue_theme = "assets\\theme-blue.json"
+retro_theme = "assets\\theme-retro.json"
 
-app_theme = purpleTheme
+app_theme = purple_theme
 icon_path = af.resource_path(r"logo.ico")
 config_path = app_local_folder + "\\config.json"
 dns_file_path = app_local_folder + "\\dns.csv"
@@ -77,7 +77,7 @@ class App(customtkinter.CTk):
 
         # Functions
         def change_dns_values(choice):
-            global primary_dns, secondary_dns, dns_list, dns_dict, dnsName
+            global primary_dns, secondary_dns, dns_list, dns_dict, dns_name
 
             # try:
             if choice == "Fastest":
@@ -86,14 +86,14 @@ class App(customtkinter.CTk):
 
             elif choice == "Current":
                 self.get_current_dns()
-                self.setbutton.configure(state="disabled")
+                self.set_button.configure(state="disabled")
             else:
-                dnsName = choice
+                dns_name = choice
                 primary_dns = dns_dict[choice][0]
                 secondary_dns = dns_dict[choice][1]
 
                 self.frame.frameUpdate()
-                self.setbutton.configure(state="normal")
+                self.set_button.configure(state="normal")
 
         def set_dns():
             global primary_dns, secondary_dns, adapter_name
@@ -110,19 +110,19 @@ class App(customtkinter.CTk):
                         )
                     subprocess.run(["ipconfig", "/flushdns"], check=True)
                     af.MessageBox(title="Done!", message=f"The DNS has been set!", width=250, parent=self)
-                    self.setbutton.configure(state="normal")
-                    self.setbutton.configure(text="Set DNS")
+                    self.set_button.configure(state="normal")
+                    self.set_button.configure(text="Set DNS")
 
-                self.setbutton.configure(state="disabled")
-                self.setbutton.configure(text="Wait...")
+                self.set_button.configure(state="disabled")
+                self.set_button.configure(text="Wait...")
                 set_thread = threading.Thread(target=set_def)
                 set_thread.start()
 
             except subprocess.CalledProcessError:
                 af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
                               parent=self, height=110)
-                self.setbutton.configure(state="normal")
-                self.setbutton.configure(text="Set DNS")
+                self.set_button.configure(state="normal")
+                self.set_button.configure(text="Set DNS")
 
         def reset_dns():
             try:
@@ -132,7 +132,7 @@ class App(customtkinter.CTk):
                     subprocess.run(["ipconfig", "/flushdns"], check=True, shell=True)
                     self.frame.label_primary.configure(text="0.0.0.0")
                     self.frame.label_secondary.configure(text="0.0.0.0")
-                    self.setbutton.configure(state="disabled")
+                    self.set_button.configure(state="disabled")
                     self.frame.pingResult.set("Ping: 0")
                     self.combobox.set("Select DNS")
                     af.show_toplevel(self, af.MessageBox(title="Info!", message="The DNS has been reset!",
@@ -155,26 +155,26 @@ class App(customtkinter.CTk):
         self.frame = AppFrame(self, fg_color="transparent")
         self.frame.grid(row=0, columnspan=3, sticky="news", pady=(20, 20), padx=20)
 
-        ComboList = []
-        ComboList.extend(dns_list)
-        ComboList.insert(0, "Fastest")
-        ComboList.insert(1, "Current")
+        combo_list = []
+        combo_list.extend(dns_list)
+        combo_list.insert(0, "Fastest")
+        combo_list.insert(1, "Current")
 
-        self.combobox = customtkinter.CTkComboBox(self, values=ComboList, command=change_dns_values, font=font_widget)
+        self.combobox = customtkinter.CTkComboBox(self, values=combo_list, command=change_dns_values, font=font_widget)
         self.combobox.grid(row=1, column=0, pady=(0, 10), padx=(30, 0), columnspan=2, sticky="ew")
 
-        addbutton = customtkinter.CTkButton(self, text="+", width=40, command=add_dns)
-        addbutton.grid(row=1, column=2, pady=(0, 10), padx=(20, 30), sticky="ew")
+        add_button = customtkinter.CTkButton(self, text="+", width=40, command=add_dns)
+        add_button.grid(row=1, column=2, pady=(0, 10), padx=(20, 30), sticky="ew")
 
-        self.setbutton = customtkinter.CTkButton(self, text="Set DNS", command=set_dns, font=font_widget)
-        self.setbutton.grid(row=2, column=0, pady=(0, 20), padx=(30, 0), sticky="ew")
-        self.setbutton.configure(state="disabled")
-        settingsButton = customtkinter.CTkButton(self, text="⚙", width=30, command=settingsOpen)
-        settingsButton.grid(row=2, column=1, pady=(0, 20), padx=(20, 0),  sticky="ew")
+        self.set_button = customtkinter.CTkButton(self, text="Set DNS", command=set_dns, font=font_widget)
+        self.set_button.grid(row=2, column=0, pady=(0, 20), padx=(30, 0), sticky="ew")
+        self.set_button.configure(state="disabled")
+        settings_button = customtkinter.CTkButton(self, text="⚙", width=30, command=settingsOpen)
+        settings_button.grid(row=2, column=1, pady=(0, 20), padx=(20, 0),  sticky="ew")
 
-        resetbutton = customtkinter.CTkButton(self, text="Reset", width=30, command=reset_dns,
+        reset_button = customtkinter.CTkButton(self, text="Reset", width=30, command=reset_dns,
                                               font=("Cascadia Code", 12, "normal"))
-        resetbutton.grid(row=2, column=2, pady=(0, 20), padx=(10, 30), sticky="ew")
+        reset_button.grid(row=2, column=2, pady=(0, 20), padx=(10, 30), sticky="ew")
 
     def updateComboBox(self):
         self.combobox.configure(values=dns_list)
@@ -195,13 +195,13 @@ class App(customtkinter.CTk):
         af.restart_program()
 
     def get_fastest(self):
-        global primary_dns, secondary_dns, dns_list, dns_dict, dnsName
+        global primary_dns, secondary_dns, dns_list, dns_dict, dns_name
 
         statusText = "Finding Fastest"
         self.after(200, lambda: self.frame.pingResult.set(statusText))
         self.combobox.set("Pinging...")
         self.combobox.configure(state="disabled")
-        self.setbutton.configure(state="disabled")
+        self.set_button.configure(state="disabled")
 
         stop_event_dots = threading.Event()
 
@@ -219,34 +219,40 @@ class App(customtkinter.CTk):
         threadDots.start()
 
         try:
-            resultList = [0]
-            fastest = 99999999
-            fastestName = ""
-            for name in dns_list:
-                ip = dns_dict[name][0]
-                self.combobox.set(name)
-                latency = ping(ip)
-                if latency is not None:
-                    latency = round(latency * 1000, 0)
-                    resultList[0] = int(latency)
-                else:
-                    resultList[0] = -1
+            def get_fastest_dns():
+                global dns_name, primary_dns, secondary_dns
 
-                latency = resultList[0]
-                if latency < fastest and latency != -1:
-                    fastest = latency
-                    fastestName = name
+                resultList = [0]
+                fastest = 99999999
+                fastestName = ""
+                for name in dns_list:
+                    ip = dns_dict[name][0]
+                    self.combobox.set(name)
+                    latency = ping(ip)
+                    if latency is not None:
+                        latency = round(latency * 1000, 0)
+                        resultList[0] = int(latency)
+                    else:
+                        resultList[0] = -1
 
-            stop_event_dots.set()
-            dnsName = fastestName
-            primary_dns = dns_dict[fastestName][0]
-            secondary_dns = dns_dict[fastestName][1]
+                    latency = resultList[0]
+                    if latency < fastest and latency != -1:
+                        fastest = latency
+                        fastestName = name
 
-            self.frame.frameUpdate(pingBool=False)
-            self.after(250, lambda: self.frame.pingResult.set(f"Ping: {fastest}"))
-            self.setbutton.configure(state="normal")
-            self.combobox.configure(state="normal")
-            self.combobox.set(fastestName)
+                stop_event_dots.set()
+                dns_name = fastestName
+                primary_dns = dns_dict[fastestName][0]
+                secondary_dns = dns_dict[fastestName][1]
+
+                self.frame.frameUpdate(pingBool=False)
+                self.after(250, lambda: self.frame.pingResult.set(f"Ping: {fastest}"))
+                self.set_button.configure(state="normal")
+                self.combobox.configure(state="normal")
+                self.combobox.set(fastestName)
+
+            get_fastest_thread = threading.Thread(target=get_fastest_dns)
+            get_fastest_thread.start()
 
         except Exception as e:
             print(e)
@@ -262,7 +268,8 @@ class App(customtkinter.CTk):
                 emptyList = []
                 res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name],
                                      capture_output=True, text=True, check=True, shell=True).stdout
-                pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b'
+                pattern = (r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|'
+                           r'[1-9]?[0-9])\b')
 
                 match = re.findall(pattern, str(res))
 
@@ -292,6 +299,7 @@ class App(customtkinter.CTk):
             secondary_dns = "0.0.0.0"
             self.after(300, lambda: self.frame.frameUpdate(pingBool=False))
             self.after(100, lambda: self.combobox.set("Current DNS"))
+
 
 # the Information Frame
 class AppFrame(customtkinter.CTkFrame):
@@ -339,6 +347,7 @@ class DnsInputWindow(customtkinter.CTkToplevel):
         self.toplevel_window = None
         self.grab_set()
         self.resizable(False, False)
+        self.attributes("-toolwindow", True)
 
         # Grid Configuration
         # Columns
@@ -404,6 +413,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.toplevel_window = None
         self.grab_set()
         self.resizable(False, False)
+        self.attributes("-toolwindow", True)
 
         self.radio_var_mode = customtkinter.IntVar(value=0)
         self.radio_var_theme = customtkinter.IntVar(value=0)
@@ -480,13 +490,13 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
         label2 = customtkinter.CTkLabel(self, text="Startup:", font=font_widget)
         label2.grid(row=6, columnspan=3, pady=(10, 0))
-        self.startup_radio1 = customtkinter.CTkRadioButton(self, text="Fastest DNS", value=0, command=self.startup_radio,
-                                                           variable=self.radio_var_startup,
+        self.startup_radio1 = customtkinter.CTkRadioButton(self, text="Fastest DNS", value=0,
+                                                           command=self.startup_radio, variable=self.radio_var_startup,
                                                            radiobutton_width=rb_Size, radiobutton_height=rb_Size,
                                                            font=settingsFont)
         self.startup_radio1.grid(row=7, column=0, padx=(25, 10), sticky="ew", columnspan=2)
-        self.startup_radio2 = customtkinter.CTkRadioButton(self, text="Current DNS", value=1, command=self.startup_radio,
-                                                           variable=self.radio_var_startup,
+        self.startup_radio2 = customtkinter.CTkRadioButton(self, text="Current DNS", value=1,
+                                                           command=self.startup_radio, variable=self.radio_var_startup,
                                                            radiobutton_width=rb_Size, radiobutton_height=rb_Size,
                                                            font=settingsFont)
         self.startup_radio2.grid(row=7, column=1, padx=(65, 10), sticky="ew", columnspan=2)
@@ -570,11 +580,11 @@ class SettingsWindow(customtkinter.CTkToplevel):
     def theme_radio(self):
         match self.radio_var_theme.get():
             case 0:
-                themeVar = purpleTheme
+                themeVar = purple_theme
             case 1:
-                themeVar = blueTheme
+                themeVar = blue_theme
             case 2:
-                themeVar = retroTheme
+                themeVar = retro_theme
             case _:
                 themeVar = "System"
 
@@ -598,15 +608,16 @@ class SettingsWindow(customtkinter.CTkToplevel):
             def check_thread():
                 self.check_version.configure(text="Checking")
                 nonlocal latest
-                temp = requests.get(githubVersionFIle)
+                temp = requests.get(github_version_file)
                 temp.raise_for_status()
                 latest = temp.text.strip()
                 if latest != VERSION:
                     self.check_version.configure(text="Update")
-                    response = af.MessageBox(parent=self, title="Info", message="New update is available!\nOpen github?",
-                                             msgType=1, width=250, height=110).get_input()
+                    response = af.MessageBox(parent=self, title="Info",
+                                             message="New update is available!\nOpen github?", msgType=1, width=250,
+                                             height=110).get_input()
                     if response is True:
-                        webbrowser.open(githubRelease)
+                        webbrowser.open(github_release)
 
                     else:
                         af.MessageBox().destroy()
@@ -627,7 +638,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
                                  msgType=1, true_button="Github", false_button="Close", height=150,
                                  width=230).get_input()
         if response:
-            webbrowser.open(githubMain)
+            webbrowser.open(github_main)
 
 
 # Get and Update DNS table
@@ -689,7 +700,7 @@ def handle_config():
             settings = {
                 'Adapter': adapter_name,
                 'Mode': appearance_mode,
-                'Theme': purpleTheme,
+                'Theme': purple_theme,
                 'Startup': on_startup
             }
 
