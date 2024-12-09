@@ -47,11 +47,30 @@ fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
 font_widget = ("Cascadia Code", 14, "normal")
 
+
+class Launcher(customtkinter.CTk):
+    def __init__(self):
+        super().__init__()
+        self.iconbitmap(icon_path)
+        self.geometry(af.center_window(self, 300, 400))
+        self.resizable(False, False)
+        self.toplevel_window = None
+
+        def launcher():
+            self.withdraw()
+            main = App()
+            main.mainloop()
+
+        launch_DNS = customtkinter.CTkButton(self, text="Set DNS", command=launcher, font=font_widget)
+        launch_DNS.pack()
+
+
 # DNS Shifter
-class App(customtkinter.CTk):
+class App(customtkinter.CTkToplevel):
     def __init__(self):
         super().__init__()
 
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.iconbitmap(icon_path)
         self.geometry(af.center_window(self, 300, 400))
         self.title(f"Void Shifter - {adapter_name}")
@@ -305,6 +324,9 @@ class App(customtkinter.CTk):
             self.after(300, lambda: self.frame.frameUpdate(pingBool=False))
             self.after(100, lambda: self.combobox.set("Current DNS"))
 
+    def on_close(self):
+        self.destroy()
+        self.master.deiconify()
 
 # the Information Frame
 class AppFrame(customtkinter.CTkFrame):
@@ -349,7 +371,7 @@ class DnsInputWindow(customtkinter.CTkToplevel):
         super().__init__()
 
         self.iconbitmap(icon_path)
-        self.geometry(af.center_window(app, 200, 300, centerType='parent'))
+        self.geometry(af.center_window(main, 200, 300, centerType='parent'))
         self.title("Add")
         self.toplevel_window = None
         self.grab_set()
@@ -388,7 +410,7 @@ class DnsInputWindow(customtkinter.CTkToplevel):
                     writer.writerow([name, prDns, scDns])
                     af.MessageBox(title="Done!", message="The DNS has been added!", width=250, parent=self)
                 handle_dns_table()
-                app.updateComboBox()
+                main.updateComboBox()
                 name_entry.delete(0, customtkinter.END)
                 prDns_entry.delete(0, customtkinter.END)
                 if scDns_entry.get() != "":
@@ -415,7 +437,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         settingsFont = ("Cascadia Code", 12, "normal")
 
         self.iconbitmap(icon_path)
-        self.geometry(af.center_window(app, 300, 450, centerType='parent'))
+        self.geometry(af.center_window(main, 300, 450, centerType='parent'))
         self.title("Settings")
         self.toplevel_window = None
         self.grab_set()
@@ -728,7 +750,7 @@ def handle_config():
 
 handle_dns_table()
 handle_config()
-main = App()
 
-main.protocol("WM_DELETE_WINDOW", af.on_closing)
-main.mainloop()
+if __name__ == "__main__":
+    main = Launcher()
+    main.mainloop()
