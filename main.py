@@ -349,7 +349,7 @@ class DnsInputWindow(customtkinter.CTkToplevel):
         super().__init__()
 
         self.iconbitmap(icon_path)
-        self.geometry(af.center_window(app, 200, 300, centerType='parent'))
+        self.geometry(af.center_window(main, 200, 300, centerType='parent'))
         self.title("Add")
         self.toplevel_window = None
         self.grab_set()
@@ -388,7 +388,7 @@ class DnsInputWindow(customtkinter.CTkToplevel):
                     writer.writerow([name, prDns, scDns])
                     af.MessageBox(title="Done!", message="The DNS has been added!", width=250, parent=self)
                 handle_dns_table()
-                app.updateComboBox()
+                main.updateComboBox()
                 name_entry.delete(0, customtkinter.END)
                 prDns_entry.delete(0, customtkinter.END)
                 if scDns_entry.get() != "":
@@ -415,7 +415,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         settingsFont = ("Cascadia Code", 12, "normal")
 
         self.iconbitmap(icon_path)
-        self.geometry(af.center_window(app, 300, 450, centerType='parent'))
+        self.geometry(af.center_window(main, 300, 450, centerType='parent'))
         self.title("Settings")
         self.toplevel_window = None
         self.grab_set()
