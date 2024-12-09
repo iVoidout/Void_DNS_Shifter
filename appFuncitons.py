@@ -58,7 +58,7 @@ class MessageBox(CTkToplevel):
         self.focus()
         self.resizable(False, False)
         self.userInput = None
-        self.iconbitmap(resource_path(r"logo.ico"))
+        self.attributes("-toolwindow", True)
 
         # Grid Configuration
         # Columns

@@ -47,15 +47,15 @@ fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
 font_widget = ("Cascadia Code", 14, "normal")
 
-
-# Main Window
+# DNS Shifter
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
         self.iconbitmap(icon_path)
         self.geometry(af.center_window(self, 300, 400))
-        self.title("Void Shifter")
+        self.title(f"Void Shifter - {adapter_name}")
+        # self.after(3000, lambda: self.title("Void Shifter"))
         self.resizable(False, False)
         self.toplevel_window = None
         # Grid Configuration
@@ -153,7 +153,7 @@ class App(customtkinter.CTk):
             af.show_toplevel(self, SettingsWindow())
 
         self.frame = AppFrame(self, fg_color="transparent")
-        self.frame.grid(row=0, columnspan=3, sticky="news", pady=(20, 20), padx=20)
+        self.frame.grid(row=0, columnspan=3, sticky="news", pady=(10, 20), padx=20)
 
         combo_list = []
         combo_list.extend(dns_list)
@@ -173,7 +173,7 @@ class App(customtkinter.CTk):
         settings_button.grid(row=2, column=1, pady=(0, 20), padx=(20, 0),  sticky="ew")
 
         reset_button = customtkinter.CTkButton(self, text="Reset", width=30, command=reset_dns,
-                                              font=("Cascadia Code", 12, "normal"))
+                                               font=("Cascadia Code", 12, "normal"))
         reset_button.grid(row=2, column=2, pady=(0, 20), padx=(10, 30), sticky="ew")
 
     def updateComboBox(self):
@@ -236,7 +236,7 @@ class App(customtkinter.CTk):
                         resultList[0] = -1
 
                     latency = resultList[0]
-                    if latency < fastest and latency != -1:
+                    if latency < fastest and latency != -1 and latency != 0:
                         fastest = latency
                         fastestName = name
 
@@ -263,7 +263,7 @@ class App(customtkinter.CTk):
         try:
 
             def current():
-                global primary_dns, secondary_dns
+                global primary_dns, secondary_dns, dns_name
 
                 emptyList = []
                 res = subprocess.run(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name],
@@ -274,6 +274,12 @@ class App(customtkinter.CTk):
                 match = re.findall(pattern, str(res))
                 if match != emptyList:
                     primary_dns = match[0]
+                    for i in dns_list:
+                        if primary_dns == dns_dict[i][0]:
+                            dns_name = i
+                            break
+                        else:
+                            dns_name = "Unknown"
 
                     if len(match) != 1:
                         secondary_dns = match[1]
@@ -310,21 +316,23 @@ class AppFrame(customtkinter.CTkFrame):
 
         self.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)  # configure grid system
         self.grid_columnconfigure(0, weight=1)
+        self.label_name = customtkinter.CTkLabel(self, text=dns_name, font=font)
+        self.label_name.grid(row=0, column=0, pady=(10, 0), sticky="ew")
         label1 = customtkinter.CTkLabel(self, text="PRIMARY DNS:", font=fontH)
-        label1.grid(row=0, column=0, pady=(10, 0), sticky="ew")
+        label1.grid(row=1, column=0, pady=(10, 0), sticky="ew")
         self.label_primary = customtkinter.CTkLabel(self, text=primary_dns, font=font)
-        self.label_primary.grid(row=1, pady=(0, 0))
+        self.label_primary.grid(row=2, pady=(0, 0))
         label2 = customtkinter.CTkLabel(self, text="SECONDARY DNS:", font=fontH)
-        label2.grid(row=2, columnspan=3, pady=(0, 0))
+        label2.grid(row=3, columnspan=3, pady=(0, 0))
         self.label_secondary = customtkinter.CTkLabel(self, text=secondary_dns, font=font)
-        self.label_secondary.grid(row=3, columnspan=3, pady=(0, 0))
+        self.label_secondary.grid(row=4, columnspan=3, pady=(0, 0))
         self.label_ping = customtkinter.CTkLabel(self, textvariable=self.pingResult, font=font, text="")
-        self.label_ping.grid(row=4, columnspan=3, pady=(20, 5), padx=(0, 0))
-        self.label_ping.grid(row=4, columnspan=3, pady=(20, 5), padx=(0, 0))
+        self.label_ping.grid(row=5, columnspan=3, pady=(20, 5), padx=(0, 0))
+        self.label_ping.grid(row=5, columnspan=3, pady=(20, 5), padx=(0, 0))
 
     def frameUpdate(self, pingBool=True):
         self.label_primary.configure(text=primary_dns)
-
+        self.label_name.configure(text=dns_name)
         if af.is_valid_ip(str(secondary_dns)):
             self.label_secondary.configure(text=secondary_dns)
         else:
@@ -720,8 +728,7 @@ def handle_config():
 
 handle_dns_table()
 handle_config()
-app = App()
+main = App()
 
-
-app.protocol("WM_DELETE_WINDOW", af.on_closing)
-app.mainloop()
+main.protocol("WM_DELETE_WINDOW", af.on_closing)
+main.mainloop()
