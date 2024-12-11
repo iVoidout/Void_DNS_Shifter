@@ -47,6 +47,7 @@ fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
 font_widget = ("Cascadia Code", 14, "normal")
 
+
 # DNS Shifter
 class App(customtkinter.CTk):
     def __init__(self):
@@ -133,7 +134,7 @@ class App(customtkinter.CTk):
                     self.frame.label_primary.configure(text="0.0.0.0")
                     self.frame.label_secondary.configure(text="0.0.0.0")
                     self.set_button.configure(state="disabled")
-                    self.frame.pingResult.set("Ping: 0")
+                    self.frame.button_ping.configure(text="Ping: 0")
                     self.combobox.set("Select DNS")
                     af.show_toplevel(self, af.MessageBox(title="Info!", message="The DNS has been reset!",
                                                          width=250, parent=self))
@@ -196,9 +197,9 @@ class App(customtkinter.CTk):
 
     def get_fastest(self):
         global primary_dns, secondary_dns, dns_list, dns_dict, dns_name
-
+        self.frame.button_ping.configure(state="disabled")
         statusText = "Finding Fastest"
-        self.after(200, lambda: self.frame.pingResult.set(statusText))
+        self.after(200, lambda: self.frame.button_ping.configure(text=statusText))
         self.combobox.set("Pinging...")
         self.combobox.configure(state="disabled")
         self.set_button.configure(state="disabled")
@@ -210,7 +211,7 @@ class App(customtkinter.CTk):
             while not stop_event_dots.is_set():
                 time.sleep(0.200)
                 if dotCount <= 3:
-                    self.frame.pingResult.set(statusText + ("." * dotCount))
+                    self.frame.button_ping.configure(text=statusText + ("." * dotCount))
                     dotCount += 1
                 else:
                     dotCount = 0
@@ -246,18 +247,20 @@ class App(customtkinter.CTk):
                 secondary_dns = dns_dict[fastestName][1]
 
                 self.frame.frameUpdate(pingBool=False)
-                self.after(250, lambda: self.frame.pingResult.set(f"Ping: {fastest}"))
+                self.after(250, lambda: self.frame.button_ping.configure(text=f"Ping: {fastest}"))
                 self.set_button.configure(state="normal")
                 self.combobox.configure(state="normal")
                 self.combobox.set(fastestName)
+                self.frame.button_ping.configure(state="normal")
 
             get_fastest_thread = threading.Thread(target=get_fastest_dns)
             get_fastest_thread.start()
 
         except Exception as e:
             print(e)
-            self.after(200, lambda: self.frame.pingResult.set("Couldn't get Fastest"))
+            self.after(200, lambda: self.frame.button_ping.configure(text="Couldn't get Fastest"))
             self.combobox.set("Select DNS")
+            self.frame.button_ping.configure(state="normal")
 
     def get_current_dns(self):
         try:
@@ -299,7 +302,7 @@ class App(customtkinter.CTk):
 
         except Exception as e:
             print(e)
-            self.after(300, lambda: self.frame.pingResult.set("Ping: 0"))
+            self.after(300, lambda: self.frame.button_ping.configure(text="Ping: 0"))
             primary_dns = "0.0.0.0"
             secondary_dns = "0.0.0.0"
             self.after(300, lambda: self.frame.frameUpdate(pingBool=False))
@@ -311,24 +314,22 @@ class AppFrame(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.pingResult = customtkinter.StringVar()
-        self.after(200, self.pingResult.set(value="Ping: 0"))
+        self.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)
+        self.grid_columnconfigure((0, 1, 2), weight=1)
 
-        self.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)  # configure grid system
-        self.grid_columnconfigure(0, weight=1)
         self.label_name = customtkinter.CTkLabel(self, text=dns_name, font=font)
-        self.label_name.grid(row=0, column=0, pady=(10, 0), sticky="ew")
+        self.label_name.grid(row=0, columnspan=3, column=0, pady=(10, 0), sticky="ew")
         label1 = customtkinter.CTkLabel(self, text="PRIMARY DNS:", font=fontH)
-        label1.grid(row=1, column=0, pady=(10, 0), sticky="ew")
+        label1.grid(row=1, columnspan=3, column=0, pady=(10, 0), sticky="ew")
         self.label_primary = customtkinter.CTkLabel(self, text=primary_dns, font=font)
-        self.label_primary.grid(row=2, pady=(0, 0))
+        self.label_primary.grid(row=2, columnspan=3, pady=(0, 0))
         label2 = customtkinter.CTkLabel(self, text="SECONDARY DNS:", font=fontH)
         label2.grid(row=3, columnspan=3, pady=(0, 0))
         self.label_secondary = customtkinter.CTkLabel(self, text=secondary_dns, font=font)
         self.label_secondary.grid(row=4, columnspan=3, pady=(0, 0))
-        self.label_ping = customtkinter.CTkLabel(self, textvariable=self.pingResult, font=font, text="")
-        self.label_ping.grid(row=5, columnspan=3, pady=(20, 5), padx=(0, 0))
-        self.label_ping.grid(row=5, columnspan=3, pady=(20, 5), padx=(0, 0))
+        self.button_ping = customtkinter.CTkButton(self, font=("Cascadia Code", 17, "normal"), text="",
+                                                   command=self.frameUpdate, anchor="center", height=30, width=30)
+        self.button_ping.grid(row=5, columnspan=3, pady=(20, 5), padx=(0, 0))
 
     def frameUpdate(self, pingBool=True):
         self.label_primary.configure(text=primary_dns)
@@ -339,9 +340,28 @@ class AppFrame(customtkinter.CTkFrame):
             self.label_secondary.configure(text="0.0.0.0")
 
         if pingBool:
-            self.pingResult.set("Pinging...")
-            af.start_threading(af.get_ping_frame, ip=primary_dns, result=self.pingResult)
+            self.ping_ip(primary_dns)
 
+    def ping_ip(self, ip):
+        def ping_func():
+            self.button_ping.configure(text="Pinging...")
+            if af.is_valid_ip(ip):
+                latency = ping(ip)
+                if latency is not None:
+                    latency = round(latency * 1000, 0)
+                    if latency < 999:
+                        self.button_ping.configure(text=f"Ping: {latency:.0f}")
+                    else:
+                        self.button_ping.configure(text=f"Ping: 999+")
+                else:
+                    self.button_ping.configure(text=f"Ping: N/A")
+            else:
+                self.button_ping.configure(text=f"Ping: N/A")
+
+        ping_thread = threading.Thread(target=ping_func)
+        ping_thread.start()
+
+        # self.after(1000, lambda: self.button_ping.configure(text=f"Ping: 999+"))
 
 # Add DNS window
 class DnsInputWindow(customtkinter.CTkToplevel):
