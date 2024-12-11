@@ -45,14 +45,18 @@ def show_toplevel(self, tl_window):
 
 # Message Box
 class MessageBox(CTkToplevel):
-    def __init__(self, parent=None, title="Info!", message="", buttontext="Ok", width=200, height=100,
-                 msgType=0, true_button="Yes", false_button="No"):
+    def __init__(self, parent: any = None, title="Info!", message="", button_text="Ok", width=200, height=100,
+                 msgType="ok", true_button="Yes", false_button="No"):
         super().__init__()
 
-        #
+        if parent is not None:
+            parent.update_idletasks()
+            self.transient(parent)
+        # Configuration
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
         self.title(title)
         self.geometry(center_window(self if parent is None else parent, width=width, height=height,
-                                    centerType='parent'))
+                                    centerType="screen" if parent is None else "parent"))
         self.attributes('-topmost', 'true')
         self.grab_set()
         self.focus()
@@ -67,12 +71,12 @@ class MessageBox(CTkToplevel):
         self.grid_rowconfigure(0, weight=2)
         self.grid_rowconfigure(1, weight=1)
 
-        message_label = CTkLabel(self, text=message)
-        message_label.grid(row=0, pady=(10, 10), padx=20, sticky="news", columnspan=2)
-        if msgType == 0:
-            msgbox_button = CTkButton(self, text=buttontext, command=self.button_ok)
+        self.message_label = CTkLabel(self, text=message)
+        self.message_label.grid(row=0, pady=(10, 10), padx=20, sticky="news", columnspan=2)
+        if msgType == "ok":
+            msgbox_button = CTkButton(self, text=button_text, command=self.button_ok)
             msgbox_button.grid(row=1, pady=(0, 20), padx=30, sticky="news", columnspan=2)
-        if msgType == 1:
+        if msgType == "yesno":
             msgbox_yes = CTkButton(self, text=true_button, command=self.button_yes)
             msgbox_yes.grid(row=1,  column=0, pady=(0, 20), padx=20, sticky="ew")
             msgbox_no = CTkButton(self, text=false_button, command=self.button_no)

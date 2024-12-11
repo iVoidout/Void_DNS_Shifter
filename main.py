@@ -12,7 +12,7 @@ import requests
 import webbrowser
 
 # variable
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 github_main = "https://github.com/iVoidout/Void_DNS_Shifter/"
 github_release = "https://github.com/iVoidout/Void_DNS_Shifter/releases"
 github_version_file = "https://raw.githubusercontent.com/iVoidout/Void_DNS_Shifter/master/VERSION.txt"
@@ -136,8 +136,7 @@ class App(customtkinter.CTk):
                     self.set_button.configure(state="disabled")
                     self.frame.button_ping.configure(text="Ping: 0")
                     self.combobox.set("Select DNS")
-                    af.show_toplevel(self, af.MessageBox(title="Info!", message="The DNS has been reset!",
-                                                         width=250, parent=self))
+                    af.MessageBox(title="Info!", message="The DNS has been reset!", width=250, parent=self)
 
                 thread_reset = threading.Thread(reset_def())
                 thread_reset.start()
@@ -174,9 +173,9 @@ class App(customtkinter.CTk):
         settings_button = customtkinter.CTkButton(self, text="⚙", width=30, command=settingsOpen)
         settings_button.grid(row=2, column=1, pady=(0, 20), padx=(20, 0),  sticky="ew")
 
-        reset_button = customtkinter.CTkButton(self, text="Reset", width=30, command=reset_dns,
+        self.reset_button = customtkinter.CTkButton(self, text="Reset", width=30, command=reset_dns,
                                                font=("Cascadia Code", 12, "normal"))
-        reset_button.grid(row=2, column=2, pady=(0, 20), padx=(10, 30), sticky="ew")
+        self.reset_button.grid(row=2, column=2, pady=(0, 20), padx=(10, 30), sticky="ew")
 
     # Extra functions : App and pop ups
     def updateComboBox(self):
@@ -199,13 +198,13 @@ class App(customtkinter.CTk):
 
     def get_fastest(self):
         global primary_dns, secondary_dns, dns_list, dns_dict, dns_name
-        self.frame.button_ping.configure(state="disabled")
         statusText = "Finding Fastest"
+        self.frame.button_ping.configure(state="disabled")
         self.after(200, lambda: self.frame.button_ping.configure(text=statusText))
         self.combobox.set("Pinging...")
         self.combobox.configure(state="disabled")
         self.set_button.configure(state="disabled")
-
+        self.reset_button.configure(state="disabled")
         stop_event_dots = threading.Event()
 
         def dotdotdot():
@@ -251,9 +250,10 @@ class App(customtkinter.CTk):
                 self.frame.frameUpdate(pingBool=False)
                 self.after(250, lambda: self.frame.button_ping.configure(text=f"Ping: {fastest}"))
                 self.set_button.configure(state="normal")
+                self.reset_button.configure(state="normal")
                 self.combobox.configure(state="normal")
                 self.combobox.set(fastestName)
-                self.frame.button_ping.configure(state="normal")
+                self.after(250, lambda: self.frame.button_ping.configure(state="normal"))
 
             get_fastest_thread = threading.Thread(target=get_fastest_dns)
             get_fastest_thread.start()
@@ -331,7 +331,7 @@ class AppFrame(customtkinter.CTkFrame):
         label2.grid(row=3, columnspan=3, pady=(0, 0))
         self.label_secondary = customtkinter.CTkLabel(self, text=secondary_dns, font=font)
         self.label_secondary.grid(row=4, columnspan=3, pady=(0, 0))
-        self.button_ping = customtkinter.CTkButton(self, font=("Cascadia Code", 17, "normal"), text="",
+        self.button_ping = customtkinter.CTkButton(self, font=("Cascadia Code", 17, "normal"), text="Pinging...",
                                                    command=self.frameUpdate, anchor="center", height=30, width=30)
         self.button_ping.grid(row=5, columnspan=3, pady=(20, 5), padx=(0, 0))
 
@@ -349,6 +349,7 @@ class AppFrame(customtkinter.CTkFrame):
 
     def ping_ip(self, ip):
         def ping_func():
+            self.button_ping.configure(state="disabled")
             self.button_ping.configure(text="Pinging...")
             if af.is_valid_ip(ip):
                 latency = ping(ip)
@@ -362,6 +363,8 @@ class AppFrame(customtkinter.CTkFrame):
                     self.button_ping.configure(text=f"Ping: N/A")
             else:
                 self.button_ping.configure(text=f"Ping: N/A")
+
+            self.after(100, lambda: self.button_ping.configure(state="normal"))
 
         ping_thread = threading.Thread(target=ping_func)
         ping_thread.start()
@@ -660,30 +663,41 @@ class SettingsWindow(customtkinter.CTkToplevel):
     # Checks the version from the VERSION var and the version file in the github repo
     def check_version(self):
         try:
+
             latest = ""
 
-            def check_thread():
+            thread_flag = threading.Event()
+
+            def check_update():
                 self.check_version.configure(text="Checking")
                 nonlocal latest
                 temp = requests.get(github_version_file)
                 temp.raise_for_status()
                 latest = temp.text.strip()
-                if latest != VERSION:
-                    self.check_version.configure(text="Update")
-                    response = af.MessageBox(parent=self, title="Info",
-                                             message="New update is available!\nOpen github?", msgType=1, width=250,
-                                             height=110).get_input()
-                    if response is True:
-                        webbrowser.open(github_release)
+                thread_flag.set()
 
+            def msg_box():
+                if thread_flag.is_set():
+                    if latest != VERSION:
+                        self.check_version.configure(text="Update")
+                        popup = af.MessageBox(parent=self, title="Info",
+                                              message="New update is available!\nOpen github?", msgType="yesno",
+                                              width=250, height=110)
+
+                        if popup.get_input() is True:
+                            webbrowser.open(github_release)
+
+                        else:
+                            popup.destroy()
                     else:
-                        af.MessageBox().destroy()
+                        self.check_version.configure(text="Update")
+                        af.MessageBox(parent=self, title="Info", message="You have the latest version")
                 else:
-                    self.check_version.configure(text="Update")
-                    af.MessageBox(parent=self, title="Info", message="You have the latest version")
+                    self.after(1000, lambda: msg_box())
 
-            thread = threading.Thread(target=check_thread)
-            thread.start()
+            thread_check_update = threading.Thread(target=check_update)
+            thread_check_update.start()
+            msg_box()
 
         except Exception as e:
             print(e)
@@ -692,7 +706,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
     def app_details(self):
         response = af.MessageBox(parent=self, title="Details", message=f"Version: {VERSION}\n\nMade by Dani Abedini",
-                                 msgType=1, true_button="Github", false_button="Close", height=150,
+                                 msgType="yesno", true_button="Github", false_button="Close", height=150,
                                  width=230).get_input()
         if response:
             webbrowser.open(github_main)
