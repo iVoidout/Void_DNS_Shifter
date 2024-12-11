@@ -5,7 +5,7 @@ from customtkinter import CTkToplevel, CTkButton, CTkLabel
 import sys
 import threading
 from psutil import net_if_addrs
-
+import re
 
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
@@ -115,6 +115,13 @@ def restart_program():
 
 def is_valid_ip(ip_str):
     try:
+        pattern = (r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|'
+                   r'[1-9]?[0-9])\b')
+        emptyList = []
+        match = re.findall(pattern, str(ip_str))
+        if match == emptyList:
+            return False
+
         socket.inet_aton(ip_str)
         return True
     except socket.error:

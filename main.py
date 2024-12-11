@@ -48,11 +48,12 @@ font = ("Cascadia Code", 18, "normal")
 font_widget = ("Cascadia Code", 14, "normal")
 
 
-# DNS Shifter
+# DNS Shifter: Main Window
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
+        # Configurations
         self.iconbitmap(icon_path)
         self.geometry(af.center_window(self, 300, 400))
         self.title(f"Void Shifter - {adapter_name}")
@@ -69,18 +70,17 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
-        # Starting Functions
+        # Startup Functions : App
         if on_startup == "Fastest":
             thread = threading.Thread(target=self.get_fastest)
             thread.start()
         else:
             self.get_current_dns()
 
-        # Functions
+        # Functions : App
         def change_dns_values(choice):
             global primary_dns, secondary_dns, dns_list, dns_dict, dns_name
 
-            # try:
             if choice == "Fastest":
                 subThread = threading.Thread(target=self.get_fastest)
                 subThread.start()
@@ -153,6 +153,7 @@ class App(customtkinter.CTk):
             self.toplevel_window = None
             af.show_toplevel(self, SettingsWindow())
 
+        # Defining and packing UI Elements
         self.frame = AppFrame(self, fg_color="transparent")
         self.frame.grid(row=0, columnspan=3, sticky="news", pady=(10, 20), padx=20)
 
@@ -177,6 +178,7 @@ class App(customtkinter.CTk):
                                                font=("Cascadia Code", 12, "normal"))
         reset_button.grid(row=2, column=2, pady=(0, 20), padx=(10, 30), sticky="ew")
 
+    # Extra functions : App and pop ups
     def updateComboBox(self):
         self.combobox.configure(values=dns_list)
 
@@ -314,9 +316,11 @@ class AppFrame(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
+        # Configuration
         self.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)
         self.grid_columnconfigure((0, 1, 2), weight=1)
 
+        # Defining and packing UI Elements
         self.label_name = customtkinter.CTkLabel(self, text=dns_name, font=font)
         self.label_name.grid(row=0, columnspan=3, column=0, pady=(10, 0), sticky="ew")
         label1 = customtkinter.CTkLabel(self, text="PRIMARY DNS:", font=fontH)
@@ -331,6 +335,7 @@ class AppFrame(customtkinter.CTkFrame):
                                                    command=self.frameUpdate, anchor="center", height=30, width=30)
         self.button_ping.grid(row=5, columnspan=3, pady=(20, 5), padx=(0, 0))
 
+    # Main function that gets used to change the values
     def frameUpdate(self, pingBool=True):
         self.label_primary.configure(text=primary_dns)
         self.label_name.configure(text=dns_name)
@@ -360,14 +365,15 @@ class AppFrame(customtkinter.CTkFrame):
 
         ping_thread = threading.Thread(target=ping_func)
         ping_thread.start()
-
         # self.after(1000, lambda: self.button_ping.configure(text=f"Ping: 999+"))
+
 
 # Add DNS window
 class DnsInputWindow(customtkinter.CTkToplevel):
     def __init__(self):
         super().__init__()
 
+        # Configuration
         self.iconbitmap(icon_path)
         self.geometry(af.center_window(main, 200, 300, centerType='parent'))
         self.title("Add")
@@ -383,12 +389,11 @@ class DnsInputWindow(customtkinter.CTkToplevel):
         # Rows
         self.grid_rowconfigure((0, 1, 2, 3, 4), weight=1)
 
-        # Functions
+        # Functions : DnsInputWindow
         def save_dns():
             name = name_entry.get()
             prDns = prDns_entry.get()
             scDns = scDns_entry.get()
-
             if name == "" or prDns == "":
                 af.MessageBox(title="Error", message="Name and Primary is needed", parent=self)
 
@@ -414,14 +419,31 @@ class DnsInputWindow(customtkinter.CTkToplevel):
                 if scDns_entry.get() != "":
                     scDns.delete(0, customtkinter.END)
 
+        def char_limiter_ip(event):
+            count = len(prDns_entry.get())
+            if count >= 15 and event.keysym not in {'BackSpace', 'Delete', 'Left', 'Right'}:
+                return 'break'
+
+        def char_limiter_ip2(event):
+            count = len(prDns_entry.get())
+            if count >= 15 and event.keysym not in {'BackSpace', 'Delete', 'Left', 'Right'}:
+                return 'break'
+
+        # Defining and packing UI Elements
         label1 = customtkinter.CTkLabel(self, text="Add Custom DNS", font=font_widget)
         label1.grid(row=0, pady=(10, 0))
         name_entry = customtkinter.CTkEntry(self, placeholder_text="Name", font=font_widget)
         name_entry.grid(row=1)
+
         prDns_entry = customtkinter.CTkEntry(self, placeholder_text="Primary", font=font_widget)
         prDns_entry.grid(row=2)
+        prDns_entry.bind('<KeyPress>', char_limiter_ip)
+        prDns_entry.bind('<KeyRelease>', char_limiter_ip)
+
         scDns_entry = customtkinter.CTkEntry(self, placeholder_text="Secondary", font=font_widget)
         scDns_entry.grid(row=3)
+        scDns_entry.bind('<KeyPress>', char_limiter_ip2)
+        scDns_entry.bind('<KeyRelease>', char_limiter_ip2)
 
         saveDns_Button = customtkinter.CTkButton(self, text="Save", command=save_dns, font=font_widget)
         saveDns_Button.grid(row=4, pady=10)
@@ -432,6 +454,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
     def __init__(self):
         super().__init__()
 
+        # Configuration
         settingsFont = ("Cascadia Code", 12, "normal")
 
         self.iconbitmap(icon_path)
@@ -442,6 +465,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         self.resizable(False, False)
         self.attributes("-toolwindow", True)
 
+        # Setting the initial values for radio buttons
         self.radio_var_mode = customtkinter.IntVar(value=0)
         self.radio_var_theme = customtkinter.IntVar(value=0)
         self.radio_var_startup = customtkinter.IntVar(value=0)
@@ -456,6 +480,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         global adapter_list, adapter_name
         adapter_list = af.get_adapters()
 
+        # Functions : SettingsWindow
         def set_adapter(choice):
             global adapter_name
             adapter_name = choice
@@ -467,9 +492,11 @@ class SettingsWindow(customtkinter.CTkToplevel):
             self.grab_release()
             self.withdraw()
 
+        # Defining and packing UI Elements
         label1 = customtkinter.CTkLabel(self, text="Select Internet Adapter:", font=font_widget)
         label1.grid(row=0, columnspan=3, pady=(15, 0))
         self.combobox = customtkinter.CTkComboBox(self, values=af.get_adapters(), command=set_adapter, font=font_widget)
+        # Check to see if the selected adapter is available
         if adapter_name not in adapter_list:
             adapter_name = adapter_list[0]
 
@@ -545,6 +572,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
                                                 width=100)
         cancel_button.grid(row=9, columnspan=3, padx=(150, 10), pady=(5, 15))
 
+        # Setting the radio buttons according to the config file and the selected settings
         with open(config_path, 'r') as jFile:
             settingsDict = json.load(jFile)
 
@@ -570,7 +598,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
             case "Current":
                 self.startup_radio2.select()
 
-    # Functions
+    # Extra Functions : SettingsWindow
     def save_settings(self):
         global adapter_name, appearance_mode, app_theme, config_path
         try:
@@ -592,6 +620,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
         except WindowsError:
             af.MessageBox(title="Error", message="Something went wrong!", width=250, parent=self)
 
+    # Getting the value from the selected radio buttons
     def mode_radio(self):
         match self.radio_var_mode.get():
             case 0:
@@ -628,6 +657,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
         return startVar
 
+    # Checks the version from the VERSION var and the version file in the github repo
     def check_version(self):
         try:
             latest = ""
@@ -750,5 +780,6 @@ handle_dns_table()
 handle_config()
 main = App()
 
+# "Gracefull" exit
 main.protocol("WM_DELETE_WINDOW", af.on_closing)
 main.mainloop()
