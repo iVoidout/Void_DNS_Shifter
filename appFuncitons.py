@@ -12,7 +12,7 @@ font = ("Cascadia Code", 18, "normal")
 fontWidget = ("Cascadia Code", 14, "normal")
 
 
-def center_window(instance, width, height, centerType='screen'):
+def center_window(instance, width, height, centerType='screen', offsetx=0, offsety=0):
 
     if centerType == "screen":
         sw = int(instance.winfo_screenwidth())
@@ -33,7 +33,7 @@ def center_window(instance, width, height, centerType='screen'):
         sy = int(sy)
         posx = x + ((sx - width) // 2)
         posy = y + ((sy - height) // 2)
-        return f"{width}x{height}+{posx}+{posy}"
+        return f"{width}x{height}+{posx + offsetx}+{posy + offsety}"
 
 
 def show_toplevel(self, tl_window):
@@ -45,13 +45,13 @@ def show_toplevel(self, tl_window):
 
 # Message Box
 class MessageBox(CTkToplevel):
-    def __init__(self, parent: any = None, title="Info!", message="", button_text="Ok", width=200, height=100,
+    def __init__(self, parent=None, title="Info!", message="", button_text="Ok", width=200, height=100,
                  msgType="ok", true_button="Yes", false_button="No"):
         super().__init__()
 
-        if parent is not None:
-            parent.update_idletasks()
-            self.transient(parent)
+        # if parent is not None:
+            # parent.update_idletasks()
+            # self.transient(parent)
         # Configuration
         self.protocol("WM_DELETE_WINDOW", self.destroy)
         self.title(title)
@@ -163,4 +163,17 @@ def get_adapters():
 
 def on_closing():
     sys.exit(0)
+
+
+def makeAppData(folderName):
+    local_appdata_path = os.getenv('LOCALAPPDATA')
+
+    appLocalFolder = local_appdata_path + "\\" + folderName
+    os.makedirs(appLocalFolder, exist_ok=True)
+
+    return appLocalFolder
+
+
+class TimeoutException(Exception):
+    pass
 

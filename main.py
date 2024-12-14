@@ -10,6 +10,7 @@ import threading
 import re
 import requests
 import webbrowser
+from ip_pinger_main import App as pinger_app
 
 # variable
 VERSION = "1.2.1"
@@ -28,14 +29,11 @@ on_startup = "Current"
 
 appearance_mode = "system"
 
-local_appdata_path = os.getenv('LOCALAPPDATA')
+app_local_folder = af.makeAppData("VOIDSHIFTER")
 
-app_local_folder = local_appdata_path + "\\VOIDSHIFTER"
-os.makedirs(app_local_folder, exist_ok=True)
-
-purple_theme = "assets\\theme-purple.json"
-blue_theme = "assets\\theme-blue.json"
-retro_theme = "assets\\theme-retro.json"
+purple_theme = af.resource_path("theme-purple.json")
+blue_theme = af.resource_path("theme-blue.json")
+retro_theme = af.resource_path("theme-retro.json")
 
 app_theme = purple_theme
 icon_path = af.resource_path(r"logo.ico")
@@ -46,6 +44,8 @@ dns_file_path = app_local_folder + "\\dns.csv"
 fontH = ("Cascadia Code", 20, "bold")
 font = ("Cascadia Code", 18, "normal")
 font_widget = ("Cascadia Code", 14, "normal")
+
+pinger_instance = None
 
 
 # DNS Shifter: Main Window
@@ -98,13 +98,14 @@ class App(customtkinter.CTk):
 
         def set_dns():
             global primary_dns, secondary_dns, adapter_name
-            try:
-                def set_def():
+
+            def set_def():
+                try:
                     subprocess.run(
                         ["netsh", "interface", "ipv4", "set", "dns", adapter_name, "static", primary_dns],
                         check=True, shell=True
                     )
-                    if secondary_dns != "" or secondary_dns != "0.0.0.0":
+                    if secondary_dns != "" and secondary_dns != "0.0.0.0":
                         subprocess.run(
                             ["netsh", "interface", "ipv4", "add", "dns", adapter_name, secondary_dns, "index=2"],
                             check=True, shell=True
@@ -114,16 +115,17 @@ class App(customtkinter.CTk):
                     self.set_button.configure(state="normal")
                     self.set_button.configure(text="Set DNS")
 
-                self.set_button.configure(state="disabled")
-                self.set_button.configure(text="Wait...")
-                set_thread = threading.Thread(target=set_def)
-                set_thread.start()
+                except subprocess.CalledProcessError as e:
+                    print(e)
+                    af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
+                                  parent=self, height=110)
+                    self.set_button.configure(state="normal")
+                    self.set_button.configure(text="Set DNS")
 
-            except subprocess.CalledProcessError:
-                af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
-                              parent=self, height=110)
-                self.set_button.configure(state="normal")
-                self.set_button.configure(text="Set DNS")
+            self.set_button.configure(state="disabled")
+            self.set_button.configure(text="Wait...")
+            threading.Thread(target=set_def).start()
+
 
         def reset_dns():
             try:
@@ -152,6 +154,22 @@ class App(customtkinter.CTk):
             self.toplevel_window = None
             af.show_toplevel(self, SettingsWindow())
 
+        def pinger_close():
+            global pinger_instance
+            # pinger_instance.withdraw()
+            pinger_instance.destroy()
+            pinger_instance = None
+
+        def pinger_open():
+            global pinger_instance
+            if pinger_instance is None or not pinger_instance.winfo_exists():
+                pinger_instance = pinger_app(self, primary_dns)
+                pinger_instance.protocol("WM_DELETE_WINDOW", pinger_close)
+                pinger_instance.mainloop()
+            else:
+                # pinger_instance.deiconify()
+                pinger_instance.focus_force()
+
         # Defining and packing UI Elements
         self.frame = AppFrame(self, fg_color="transparent")
         self.frame.grid(row=0, columnspan=3, sticky="news", pady=(10, 20), padx=20)
@@ -162,10 +180,12 @@ class App(customtkinter.CTk):
         combo_list.insert(1, "Current")
 
         self.combobox = customtkinter.CTkComboBox(self, values=combo_list, command=change_dns_values, font=font_widget)
-        self.combobox.grid(row=1, column=0, pady=(0, 10), padx=(30, 0), columnspan=2, sticky="ew")
+        self.combobox.grid(row=1, column=0, pady=(0, 10), padx=(30, 0), columnspan=1, sticky="ew")
 
-        add_button = customtkinter.CTkButton(self, text="+", width=40, command=add_dns)
-        add_button.grid(row=1, column=2, pady=(0, 10), padx=(20, 30), sticky="ew")
+        button_pinger = customtkinter.CTkButton(self, text=">", width=30, command=pinger_open)
+        button_pinger.grid(row=1, column=2, pady=(0, 10), padx=(10, 30), sticky="ew")
+        add_button = customtkinter.CTkButton(self, text="+", width=30, command=add_dns)
+        add_button.grid(row=1, column=1, pady=(0, 10), padx=(10, 0), sticky="ew")
 
         self.set_button = customtkinter.CTkButton(self, text="Set DNS", command=set_dns, font=font_widget)
         self.set_button.grid(row=2, column=0, pady=(0, 20), padx=(30, 0), sticky="ew")
@@ -676,28 +696,42 @@ class SettingsWindow(customtkinter.CTkToplevel):
                 latest = temp.text.strip()
                 thread_flag.set()
 
-            def msg_box():
-                if thread_flag.is_set():
-                    if latest != VERSION:
-                        self.check_version.configure(text="Update")
-                        popup = af.MessageBox(parent=self, title="Info",
-                                              message="New update is available!\nOpen github?", msgType="yesno",
-                                              width=250, height=110)
+            def msg_box(s_time, timeout):
+                try:
+                    # Checks the thread event to see if the version check is done
+                    if thread_flag.is_set():
+                        if latest != VERSION:
+                            self.check_version.configure(text="Update")
+                            popup = af.MessageBox(parent=self, title="Info",
+                                                  message="New update is available!\nOpen github?", msgType="yesno",
+                                                  width=250, height=110)
 
-                        if popup.get_input() is True:
-                            webbrowser.open(github_release)
+                            if popup.get_input() is True:
+                                webbrowser.open(github_release)
 
+                            else:
+                                popup.destroy()
                         else:
-                            popup.destroy()
+                            self.check_version.configure(text="Update")
+                            af.MessageBox(parent=self, title="Info", message="You have the latest version")
                     else:
-                        self.check_version.configure(text="Update")
-                        af.MessageBox(parent=self, title="Info", message="You have the latest version")
-                else:
-                    self.after(1000, lambda: msg_box())
+                        # Every 1 second checks the thread event
+                        after_id = self.after(1000, lambda: msg_box(s_time, timeout))
+
+                        current_time = time.time()
+                        if current_time - s_time > timeout:
+                            print("failed")
+                            self.after_cancel(after_id)
+                            raise af.TimeoutException("Check timed out!")
+
+                except af.TimeoutException as e:
+                    print(e)
+                    af.MessageBox(parent=self, title="Info", message=e)
+                    self.check_version.configure(text="Update")
 
             thread_check_update = threading.Thread(target=check_update)
             thread_check_update.start()
-            msg_box()
+            msg_box(time.time(), 10)
 
         except Exception as e:
             print(e)
