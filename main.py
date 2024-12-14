@@ -369,7 +369,7 @@ class AppFrame(customtkinter.CTkFrame):
 
     def ping_ip(self, ip):
         def ping_func():
-            self.button_ping.configure(state="disabled")
+            self.after(20, lambda: self.button_ping.configure(state="disabled"))
             self.button_ping.configure(text="Pinging...")
             if af.is_valid_ip(ip):
                 latency = ping(ip)
