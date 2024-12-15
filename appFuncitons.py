@@ -1,7 +1,7 @@
 import socket
 import os
 from ping3 import ping
-from customtkinter import CTkToplevel, CTkButton, CTkLabel
+import customtkinter
 import sys
 import threading
 from psutil import net_if_addrs
@@ -43,26 +43,32 @@ def show_toplevel(self, tl_window):
         tl_window.focus(self)
 
 
+class Bodge(customtkinter.CTk):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.geometry(center_window(self, centerType="screen", height=0, width=0))
+        self.overrideredirect(True)
+
+
 # Message Box
-class MessageBox(CTkToplevel):
+class MessageBox(customtkinter.CTkToplevel):
     def __init__(self, parent=None, title="Info!", message="", button_text="Ok", width=200, height=100,
                  msgType="ok", true_button="Yes", false_button="No"):
         super().__init__()
 
-        # if parent is not None:
-            # parent.update_idletasks()
-            # self.transient(parent)
         # Configuration
-        self.protocol("WM_DELETE_WINDOW", self.destroy)
+        # self.protocol("WM_DELETE_WINDOW", self.destroy)
         self.title(title)
         self.geometry(center_window(self if parent is None else parent, width=width, height=height,
                                     centerType="screen" if parent is None else "parent"))
-        self.attributes('-topmost', 'true')
-        self.grab_set()
-        self.focus()
         self.resizable(False, False)
         self.userInput = None
         self.attributes("-toolwindow", True)
+        customtkinter.set_default_color_theme(str(resource_path("theme-0.json")))
+        if parent is not None:
+            # self.grab_set()
+            self.focus()
+            self.attributes('-topmost', 'true')
 
         # Grid Configuration
         # Columns
@@ -71,15 +77,15 @@ class MessageBox(CTkToplevel):
         self.grid_rowconfigure(0, weight=2)
         self.grid_rowconfigure(1, weight=1)
 
-        self.message_label = CTkLabel(self, text=message)
+        self.message_label = customtkinter.CTkLabel(self, text=message)
         self.message_label.grid(row=0, pady=(10, 10), padx=20, sticky="news", columnspan=2)
         if msgType == "ok":
-            msgbox_button = CTkButton(self, text=button_text, command=self.button_ok)
+            msgbox_button = customtkinter.CTkButton(self, text=button_text, command=self.button_ok)
             msgbox_button.grid(row=1, pady=(0, 20), padx=30, sticky="news", columnspan=2)
         if msgType == "yesno":
-            msgbox_yes = CTkButton(self, text=true_button, command=self.button_yes)
+            msgbox_yes = customtkinter.CTkButton(self, text=true_button, command=self.button_yes)
             msgbox_yes.grid(row=1,  column=0, pady=(0, 20), padx=20, sticky="ew")
-            msgbox_no = CTkButton(self, text=false_button, command=self.button_no)
+            msgbox_no = customtkinter.CTkButton(self, text=false_button, command=self.button_no)
             msgbox_no.grid(row=1, column=1,  pady=(0, 20), padx=20, sticky="ew")
 
     def button_ok(self):
@@ -172,6 +178,15 @@ def makeAppData(folderName):
     os.makedirs(appLocalFolder, exist_ok=True)
 
     return appLocalFolder
+
+
+def get_platform():
+    if sys.platform.startswith("win"):
+        return 0
+    if sys.platform.startswith("darwin"):
+        return 1
+    else:
+        return 2
 
 
 class TimeoutException(Exception):

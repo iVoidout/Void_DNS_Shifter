@@ -38,15 +38,13 @@ def main_status(self, label, text="Error!", color="red"):
 appFolder = af.makeAppData("VOIDSHIFTER")
 
 ipFilePath = appFolder + "\\ipList.csv"
-purpleTheme = af.resource_path("theme-purple.json")
-
-customtkinter.set_default_color_theme(purpleTheme)
 
 
 class App(customtkinter.CTk):
-    def __init__(self, parent=None, ip_address=None):
+    def __init__(self, app_theme="assets\\theme-purple.json", parent=None, ip_address=None):
         super().__init__()
         stop_ping_event = threading.Event()
+        customtkinter.set_default_color_theme(app_theme)
 
         self.iconbitmap(af.resource_path("pinger_logo.ico"))
         self.geometry(af.center_window(self if parent is None else parent, 200, 300,

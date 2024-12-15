@@ -1,3 +1,4 @@
+import sys
 import time
 import customtkinter
 import appFuncitons as af
@@ -31,9 +32,9 @@ appearance_mode = "system"
 
 app_local_folder = af.makeAppData("VOIDSHIFTER")
 
-purple_theme = af.resource_path("theme-purple.json")
-blue_theme = af.resource_path("theme-blue.json")
-retro_theme = af.resource_path("theme-retro.json")
+purple_theme = af.resource_path("theme-0.json")
+blue_theme = af.resource_path("theme-0.json")
+retro_theme = af.resource_path("theme-0.json")
 
 app_theme = purple_theme
 icon_path = af.resource_path(r"logo.ico")
@@ -101,15 +102,27 @@ class App(customtkinter.CTk):
 
             def set_def():
                 try:
-                    subprocess.run(
-                        ["netsh", "interface", "ipv4", "set", "dns", adapter_name, "static", primary_dns],
-                        check=True, shell=True
-                    )
-                    if secondary_dns != "" and secondary_dns != "0.0.0.0":
+                    if sys.platform.startswith("win"):
                         subprocess.run(
-                            ["netsh", "interface", "ipv4", "add", "dns", adapter_name, secondary_dns, "index=2"],
+                            ["netsh", "interface", "ipv4", "set", "dns", adapter_name, "static", primary_dns],
                             check=True, shell=True
                         )
+                        if secondary_dns != "" and secondary_dns != "0.0.0.0":
+                            subprocess.run(
+                                ["netsh", "interface", "ipv4", "add", "dns", adapter_name, secondary_dns, "index=2"],
+                                check=True, shell=True
+                            )
+                    elif sys.platform.startswith("darwin"):
+                        subprocess.run(
+                            ["networksetup", "-setdnsservers", adapter_name, primary_dns],
+                            check=True, shell=True
+                        )
+                        if secondary_dns:
+                            subprocess.run(
+                                ["networksetup", "-setdnsservers", adapter_name, primary_dns, secondary_dns],
+                                check=True, shell=True
+                            )
+
                     subprocess.run(["ipconfig", "/flushdns"], check=True)
                     af.MessageBox(title="Done!", message=f"The DNS has been set!", width=250, parent=self)
                     self.set_button.configure(state="normal")
@@ -125,7 +138,6 @@ class App(customtkinter.CTk):
             self.set_button.configure(state="disabled")
             self.set_button.configure(text="Wait...")
             threading.Thread(target=set_def).start()
-
 
         def reset_dns():
             try:
@@ -163,11 +175,12 @@ class App(customtkinter.CTk):
         def pinger_open():
             global pinger_instance
             if pinger_instance is None or not pinger_instance.winfo_exists():
-                pinger_instance = pinger_app(self, primary_dns)
+                pinger_instance = pinger_app(parent=self, app_theme=app_theme, ip_address=primary_dns)
                 pinger_instance.protocol("WM_DELETE_WINDOW", pinger_close)
                 pinger_instance.mainloop()
             else:
                 # pinger_instance.deiconify()
+                pinger_instance.lift()
                 pinger_instance.focus_force()
 
         # Defining and packing UI Elements
@@ -608,11 +621,11 @@ class SettingsWindow(customtkinter.CTkToplevel):
                 self.mode_radio3.select()
 
         match settingsDict['Theme']:
-            case s if "theme-purple.json" in s:
+            case s if "theme-0.json" in s:
                 self.theme_radio1.select()
-            case  s if "theme-blue.json" in s:
+            case  s if "theme-1.json" in s:
                 self.theme_radio2.select()
-            case  s if "theme-retro.json" in s:
+            case  s if "theme-2.json" in s:
                 self.theme_radio3.select()
 
         match settingsDict['Startup']:
@@ -795,7 +808,7 @@ def handle_config():
 
             adapter_name = settings['Adapter']
             appearance_mode = settings['Mode']
-            app_theme = settings['Theme']
+            app_theme = settings['Theme'][-12:]
             on_startup = settings['Startup']
 
         adapterCheck = adapter_list.count(adapter_name) == 0
@@ -813,9 +826,20 @@ def handle_config():
                 json.dump(settings, jsonFile)
 
             if adapterCheck:
-                App().check_adapter()
+                bodge = af.Bodge()
+                msg_instance = af.MessageBox(title="Info!", message="Config File has been reset", height=100, width=250,
+                                             parent=bodge)
+                msg_instance.wait_window()
+                bodge.destroy()
+                af.restart_program()
             else:
-                App().configFileInfo()
+                bodge = af.Bodge()
+                msg_instance = af.MessageBox(title="Info!", message="Config File has been reset", height=100, width=250,
+                                             parent=bodge)
+                msg_instance.wait_window()
+                bodge.destroy()
+                af.restart_program()
+
     except Exception as e:
         af.MessageBox(title="Error", message="Something went wrong!\nCouldn't handle config.")
         print(e)
