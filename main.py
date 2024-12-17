@@ -34,8 +34,8 @@ appearance_mode = "system"
 app_local_folder = af.makeAppData("VOIDSHIFTER")
 
 purple_theme = af.resource_path("theme-0.json")
-blue_theme = af.resource_path("theme-0.json")
-retro_theme = af.resource_path("theme-0.json")
+blue_theme = af.resource_path("theme-1.json")
+retro_theme = af.resource_path("theme-2.json")
 
 app_theme = purple_theme
 icon_path = af.resource_path(r"logo.ico")
@@ -525,7 +525,6 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
         def open_folder():
             subprocess.run(["start", app_local_folder], shell=True)
-            # os.system(f"start {app_local_folder}")
 
         def close_window():
             self.grab_release()
