@@ -11,7 +11,8 @@ import threading
 import re
 import requests
 import webbrowser
-from ip_pinger_main import App as pinger_app
+import ip_pinger_main as ip_main
+from test2 import ToplevelWindow
 
 # variable
 VERSION = "1.2.1"
@@ -130,8 +131,8 @@ class App(customtkinter.CTk):
 
                 except subprocess.CalledProcessError as e:
                     print(e)
-                    af.MessageBox(title="Error", message="Something went wrong!\nTry running as Admin.",
-                                  parent=self, height=110)
+                    af.MessageBox(title="Done!", message=f"Something went wrong!\nTry running as admin!",
+                                  width=250, parent=self)
                     self.set_button.configure(state="normal")
                     self.set_button.configure(text="Set DNS")
 
@@ -166,22 +167,23 @@ class App(customtkinter.CTk):
             self.toplevel_window = None
             af.show_toplevel(self, SettingsWindow())
 
-        def pinger_close():
-            global pinger_instance
-            # pinger_instance.withdraw()
-            pinger_instance.destroy()
-            pinger_instance = None
-
         def pinger_open():
             global pinger_instance
             if pinger_instance is None or not pinger_instance.winfo_exists():
-                pinger_instance = pinger_app(parent=self, app_theme=app_theme, ip_address=primary_dns)
+                pinger_instance = ip_main.App(parent=self, app_theme=app_theme, ip_address=primary_dns,
+                                              appearance_mode=appearance_mode)
                 pinger_instance.protocol("WM_DELETE_WINDOW", pinger_close)
                 pinger_instance.mainloop()
             else:
                 # pinger_instance.deiconify()
                 pinger_instance.lift()
                 pinger_instance.focus_force()
+
+        def pinger_close():
+            global pinger_instance
+            # pinger_instance.withdraw()
+            pinger_instance.destroy()
+            pinger_instance = None
 
         # Defining and packing UI Elements
         self.frame = AppFrame(self, fg_color="transparent")
@@ -210,7 +212,7 @@ class App(customtkinter.CTk):
                                                font=("Cascadia Code", 12, "normal"))
         self.reset_button.grid(row=2, column=2, pady=(0, 20), padx=(10, 30), sticky="ew")
 
-    # Extra functions : App and pop ups
+    # Extra functions : App and pop-ups
     def updateComboBox(self):
         self.combobox.configure(values=dns_list)
 
@@ -232,12 +234,12 @@ class App(customtkinter.CTk):
     def get_fastest(self):
         global primary_dns, secondary_dns, dns_list, dns_dict, dns_name
         statusText = "Finding Fastest"
-        self.frame.button_ping.configure(state="disabled")
-        self.after(200, lambda: self.frame.button_ping.configure(text=statusText))
+        self.after(100, lambda: self.frame.button_ping.configure(text=statusText))
+        self.after(100, lambda: self.frame.button_ping.configure(state="disabled"))
         self.combobox.set("Pinging...")
-        self.combobox.configure(state="disabled")
-        self.set_button.configure(state="disabled")
-        self.reset_button.configure(state="disabled")
+        self.after(100, lambda: self.combobox.configure(state="disabled"))
+        self.after(100, lambda: self.set_button.configure(state="disabled"))
+        self.after(100, lambda: self.reset_button.configure(state="disabled"))
         stop_event_dots = threading.Event()
 
         def dotdotdot():
@@ -282,10 +284,10 @@ class App(customtkinter.CTk):
 
                 self.frame.frameUpdate(pingBool=False)
                 self.after(250, lambda: self.frame.button_ping.configure(text=f"Ping: {fastest}"))
-                self.set_button.configure(state="normal")
-                self.reset_button.configure(state="normal")
-                self.combobox.configure(state="normal")
-                self.combobox.set(fastestName)
+                self.after(100, lambda: self.set_button.configure(state="normal"))
+                self.after(100, lambda: self.reset_button.configure(state="normal"))
+                self.after(100, lambda: self.combobox.configure(state="normal"))
+                self.after(100, lambda: self.combobox.set(fastestName))
                 self.after(250, lambda: self.frame.button_ping.configure(state="normal"))
 
             get_fastest_thread = threading.Thread(target=get_fastest_dns)
@@ -522,7 +524,8 @@ class SettingsWindow(customtkinter.CTkToplevel):
             adapter_name = choice
 
         def open_folder():
-            os.system(f"start {app_local_folder}")
+            subprocess.run(["start", app_local_folder], shell=True)
+            # os.system(f"start {app_local_folder}")
 
         def close_window():
             self.grab_release()
@@ -643,7 +646,9 @@ class SettingsWindow(customtkinter.CTkToplevel):
 
             settingsDict['Adapter'] = adapter_name
             settingsDict['Mode'] = self.mode_radio()
+            print(self.mode_radio())
             settingsDict['Theme'] = self.theme_radio()
+            print(self.theme_radio())
             settingsDict['Startup'] = self.startup_radio()
 
             with open(config_path, 'w') as jFile:
@@ -678,7 +683,7 @@ class SettingsWindow(customtkinter.CTkToplevel):
             case 2:
                 themeVar = retro_theme
             case _:
-                themeVar = "System"
+                themeVar = "app_theme"
 
         return themeVar
 
@@ -845,7 +850,7 @@ def handle_config():
         print(e)
 
     customtkinter.set_appearance_mode(appearance_mode)
-    customtkinter.set_default_color_theme(app_theme)
+    customtkinter.set_default_color_theme(af.resource_path(app_theme))
 
 
 handle_dns_table()

@@ -41,11 +41,11 @@ ipFilePath = appFolder + "\\ipList.csv"
 
 
 class App(customtkinter.CTk):
-    def __init__(self, app_theme="assets\\theme-purple.json", parent=None, ip_address=None):
+    def __init__(self, app_theme="theme-0.json", appearance_mode="system", parent=None, ip_address=None):
         super().__init__()
         stop_ping_event = threading.Event()
-        customtkinter.set_default_color_theme(app_theme)
-
+        customtkinter.set_default_color_theme(af.resource_path(app_theme))
+        customtkinter.set_appearance_mode(appearance_mode)
         self.iconbitmap(af.resource_path("pinger_logo.ico"))
         self.geometry(af.center_window(self if parent is None else parent, 200, 300,
                                        centerType="screen" if parent is None else "parent", offsety=0))
@@ -330,7 +330,6 @@ def handle_ip_table():
 
 
 handle_ip_table()
-
 
 if __name__ == "__main__":
     main = App()

@@ -54,21 +54,19 @@ class Bodge(customtkinter.CTk):
 class MessageBox(customtkinter.CTkToplevel):
     def __init__(self, parent=None, title="Info!", message="", button_text="Ok", width=200, height=100,
                  msgType="ok", true_button="Yes", false_button="No"):
-        super().__init__()
+        super().__init__(parent)
 
         # Configuration
-        # self.protocol("WM_DELETE_WINDOW", self.destroy)
         self.title(title)
         self.geometry(center_window(self if parent is None else parent, width=width, height=height,
                                     centerType="screen" if parent is None else "parent"))
         self.resizable(False, False)
         self.userInput = None
         self.attributes("-toolwindow", True)
+        self.grab_set()
+        self.focus()
+        self.attributes('-topmost', 'true')
         customtkinter.set_default_color_theme(str(resource_path("theme-0.json")))
-        if parent is not None:
-            # self.grab_set()
-            self.focus()
-            self.attributes('-topmost', 'true')
 
         # Grid Configuration
         # Columns
@@ -108,12 +106,32 @@ class MessageBox(customtkinter.CTkToplevel):
         return self.userInput
 
 
+class NewM(customtkinter.CTkToplevel):
+    def __init__(self, title, message):
+        super().__init__()
+        self.geometry("300x300+0+300")
+        self.title(title)
+
+        self.message_label = customtkinter.CTkLabel(self, text=message)
+        self.message_label.grid(row=0, pady=(10, 10), padx=20, sticky="news", columnspan=2)
+        msgbox_button = customtkinter.CTkButton(self, text="nigga", command=self.button_ok)
+        msgbox_button.grid(row=1, pady=(0, 20), padx=30, sticky="news", columnspan=2)
+
+    def button_ok(self):
+        self.destroy()
+
+
+def show_test(title, meg):
+    msg_box = NewM(title=title, message=meg)
+    msg_box.grab_set()
+
+
+
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
-    except Exception as e:
-        print(e)
-        base_path = os.path.abspath(".")
+    except Exception:
+        base_path = os.path.dirname(os.path.abspath(__file__))
 
     return os.path.join(base_path, relative_path)
 
