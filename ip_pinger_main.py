@@ -37,8 +37,8 @@ def main_status(self, label, text="Error!", color="red"):
 
 appFolder = af.makeAppData("VOIDSHIFTER")
 
-ipFilePath = appFolder + "\\ipList.csv"
-
+ip_file_path = appFolder + "\\ipList.csv"
+log_path = appFolder + "\\pingLogs.csv"
 
 class App(customtkinter.CTk):
     def __init__(self, app_theme="theme-0.json", appearance_mode="system", parent=None, ip_address=None):
@@ -163,7 +163,7 @@ class App(customtkinter.CTk):
                             main_status(text="Name already used!", self=self, label=main_label)
                             return
 
-                    with open(ipFilePath, mode='a', newline='') as dnsFile:
+                    with open(ip_file_path, mode='a', newline='') as dnsFile:
                         writer = csv.writer(dnsFile)
                         writer.writerow([ipName, ipaddress])
                     handle_ip_table()
@@ -180,8 +180,8 @@ class App(customtkinter.CTk):
                 serverName = ip_combobox.get()
                 timeNow = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
-                if os.path.isfile("logs.csv") is False:
-                    with open("logs.csv", mode="a", newline="") as log:
+                if os.path.isfile(log_path) is False:
+                    with open(log_path, mode="a", newline="") as log:
                         writer = csv.writer(log)
                         writer.writerow(["Time", "Server", "Average", "Max Ping", "Loss %", "Packet Count"])
                         writer.writerow([timeNow, serverName, avg_ping, max_ping, loss_packets,
@@ -190,7 +190,7 @@ class App(customtkinter.CTk):
                         main_label.configure(text_color="Yellow")
                         self.after(1000, lambda: main_label.configure(text_color="white"))
                 else:
-                    with open("logs.csv", mode="a", newline="") as log:
+                    with open(log_path, mode="a", newline="") as log:
                         writer = csv.writer(log)
                         writer.writerow([timeNow, serverName, avg_ping, max_ping, loss_packets,
                                          f"{packetsLost} of {pingCount}"])
@@ -234,7 +234,6 @@ class App(customtkinter.CTk):
             avg_label.configure(text="Avg: 0")
             max_label.configure(text="Max: 0")
             loss_label.configure(text="Loss: 0% (0 / 0)")
-
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=2)
@@ -297,28 +296,28 @@ class App(customtkinter.CTk):
 
 
 def handle_ip_table():
-    global ipDict, ipList, ipFilePath
+    global ipDict, ipList, ip_file_path
     ipDict = {}
     ipList = []
 
     try:
-        if os.path.isfile(ipFilePath):
+        if os.path.isfile(ip_file_path):
 
-            with open(ipFilePath, mode='r') as file:
+            with open(ip_file_path, mode='r') as file:
                 csv_reader = csv.reader(file)
                 for row in csv_reader:
                     ipDict[row[0]] = [row[1]]
                     ipList.append(row[0])
 
         else:
-            with open(ipFilePath, mode='w', newline='') as dnsFile:
+            with open(ip_file_path, mode='w', newline='') as dnsFile:
                 writer = csv.writer(dnsFile)
                 writer.writerow(['Google', "8.8.8.8"])
                 writer.writerow(['CloudFlare', "1.1.1.1"])
                 writer.writerow(['Hunt:Showdown (RU)', "77.223.103.204"])
                 writer.writerow(['Valorant (BH)', "99.83.199.240"])
 
-            with open(ipFilePath, mode='r') as file:
+            with open(ip_file_path, mode='r') as file:
                 csv_reader = csv.reader(file)
                 for row in csv_reader:
                     ipDict[row[0]] = [row[1]]
