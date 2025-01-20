@@ -12,7 +12,7 @@ import re
 import requests
 import webbrowser
 import ip_pinger_main as ip_main
-from test2 import ToplevelWindow
+
 
 # variable
 VERSION = "1.2.1"
